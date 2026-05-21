@@ -1,0 +1,58 @@
+# ── Secrets ───────────────────────────────────────────────────
+.env
+.env.local
+.env.production
+.env.staging
+nginx/ssl/
+*.pem
+*.key
+secrets/
+.aws/
+
+# ── Python ────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyc
+.Python
+venv/
+.venv/
+env/
+*.egg-info/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+backend/*.log
+backend/server_out.log
+
+# ── Node / Frontend ───────────────────────────────────────────
+node_modules/
+frontend/dist/
+frontend/.vercel/
+*.tsbuildinfo
+.next/
+.nuxt/
+
+# ── Docker ────────────────────────────────────────────────────
+medassist-backend.tar.gz
+
+# ── Database ──────────────────────────────────────────────────
+*.db
+*.sqlite3
+
+# ── Logs ──────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── OS / IDE ──────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# ── Alembic ───────────────────────────────────────────────────
+backend/alembic/versions/*.pyc

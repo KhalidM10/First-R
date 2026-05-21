@@ -1,0 +1,249 @@
+name: CI/CD — MedAssist AI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "20"
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+# ════════════════════════════════════════════════════════════════
+# JOB 1 — Backend Tests
+# ════════════════════════════════════════════════════════════════
+jobs:
+  test-backend:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: medassist_test
+          POSTGRES_USER: medassist
+          POSTGRES_PASSWORD: testpassword
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt
+
+      - name: Lint (ruff)
+        working-directory: backend
+        run: |
+          pip install ruff --quiet
+          ruff check app/ --select E,F,W --ignore E501 || true
+
+      - name: Health check — API starts
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://medassist:testpassword@localhost:5432/medassist_test
+          SECRET_KEY: ci-test-secret-key-not-for-production
+          ALGORITHM: HS256
+          ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+          ALLOWED_ORIGINS: "http://localhost"
+          ENVIRONMENT: test
+        run: |
+          python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          sleep 5
+          curl -f http://localhost:8000/health
+          kill %1
+
+# ════════════════════════════════════════════════════════════════
+# JOB 2 — Frontend Tests
+# ════════════════════════════════════════════════════════════════
+  test-frontend:
+    name: Frontend Build & Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci --frozen-lockfile
+
+      - name: Type check
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      - name: Build
+        working-directory: frontend
+        env:
+          VITE_API_BASE_URL: /api
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 1
+
+# ════════════════════════════════════════════════════════════════
+# JOB 3 — Deploy Frontend → Vercel
+# ════════════════════════════════════════════════════════════════
+  deploy-frontend:
+    name: Deploy Frontend (Vercel)
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    environment:
+      name: production
+      url: https://medassist-ai.com
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel environment
+        working-directory: frontend
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build for Vercel
+        working-directory: frontend
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to Vercel
+        working-directory: frontend
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+# ════════════════════════════════════════════════════════════════
+# JOB 4 — Deploy Backend → AWS EC2
+# ════════════════════════════════════════════════════════════════
+  deploy-backend:
+    name: Deploy Backend (EC2)
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    environment:
+      name: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t medassist-backend:${{ github.sha }} ./backend
+          docker tag medassist-backend:${{ github.sha }} medassist-backend:latest
+
+      - name: Save image to tarball
+        run: docker save medassist-backend:latest | gzip > medassist-backend.tar.gz
+
+      - name: Copy image to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: medassist-backend.tar.gz
+          target: /home/${{ secrets.EC2_USER }}/
+
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+
+            # Load new image
+            docker load < ~/medassist-backend.tar.gz
+
+            # Pull latest compose file
+            cd ~/medassist-ai
+            git pull origin main
+
+            # Write production .env from secrets
+            cat > .env <<EOF
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            SECRET_KEY=${{ secrets.SECRET_KEY }}
+            ALGORITHM=HS256
+            ACCESS_TOKEN_EXPIRE_MINUTES=60
+            ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}
+            ENVIRONMENT=production
+            MPESA_CONSUMER_KEY=${{ secrets.MPESA_CONSUMER_KEY }}
+            MPESA_CONSUMER_SECRET=${{ secrets.MPESA_CONSUMER_SECRET }}
+            EOF
+
+            # Zero-downtime restart
+            docker compose up -d --no-build backend
+
+            # Smoke test
+            sleep 5
+            curl -f http://localhost:8000/health || (echo "Health check failed" && exit 1)
+
+            echo "Deployment complete — SHA ${{ github.sha }}"
+
+# ════════════════════════════════════════════════════════════════
+# JOB 5 — Notify on failure
+# ════════════════════════════════════════════════════════════════
+  notify-failure:
+    name: Notify on Failure
+    needs: [deploy-frontend, deploy-backend]
+    runs-on: ubuntu-latest
+    if: failure() && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Send failure notification
+        run: |
+          echo "CI/CD pipeline failed for commit ${{ github.sha }}"
+          echo "Branch: ${{ github.ref }}"
+          echo "Triggered by: ${{ github.actor }}"
+          # Add Slack/email notification here when configured

@@ -1,0 +1,53 @@
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.config import get_settings
+from app.database import engine, Base
+from app.api.routes import auth, triage, appointments, clinics, patients, orders, dashboard
+
+settings = get_settings()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    Base.metadata.create_all(bind=engine)
+    yield
+
+
+app = FastAPI(
+    title="MedAssist AI API",
+    description="Kenya-first AI health guidance and triage platform",
+    version="1.0.0",
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ── Routes ────────────────────────────────────────────────────────────────────
+app.include_router(auth.router,         prefix="/api/v1/auth",          tags=["auth"])
+app.include_router(triage.router,       prefix="/api/v1/triage",        tags=["triage"])
+app.include_router(appointments.router, prefix="/api/v1/appointments",  tags=["appointments"])
+app.include_router(clinics.router,      prefix="/api/v1/clinics",       tags=["clinics"])
+app.include_router(patients.router,     prefix="/api/v1/patients",      tags=["patients"])
+app.include_router(orders.router,       prefix="/api/v1/orders",        tags=["orders"])
+app.include_router(dashboard.router,    prefix="/api/v1/dashboard",     tags=["dashboard"])
+
+
+@app.get("/", tags=["health"])
+async def root():
+    return {"service": "MedAssist AI", "version": "1.0.0", "status": "operational"}
+
+
+@app.get("/health", tags=["health"])
+async def health_check():
+    return {"status": "healthy"}

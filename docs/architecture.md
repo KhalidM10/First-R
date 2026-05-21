@@ -3,8 +3,7 @@
 ## Overview
 
 MedAssist AI is a Kenya-first AI health triage and guidance platform.
-The MVP targets **Series A** funding and demonstrates product-market fit
-across 5 integrated modules.
+The platform covers 5 integrated modules.
 
 ---
 

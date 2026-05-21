@@ -1,8 +1,7 @@
-# MedAssist AI — Demo Day Deployment Checklist
-**Event:** Series A Investor Demonstration
+# MedAssist AI — Production Deployment Checklist
 **Target date:** _______________
 
-Mark each item ✓ as completed. Do not present until all items are checked.
+Mark each item ✓ as completed before going live.
 
 ---
 
@@ -58,17 +57,19 @@ Mark each item ✓ as completed. Do not present until all items are checked.
   - [ ] 1,170 analytics rows (90 days)
   - [ ] 31 OTC products
   - [ ] 8 appointments for TODAY at Westlands
-- [ ] Demo credentials work:
+- [ ] Seed accounts work (login + correct role redirect):
   - [ ] `jane.wanjiku@demo.medassist.co.ke` / `demo1234` → patient role
   - [ ] `admin1@demo.medassist.co.ke` / `demo1234` → clinic_admin role
   - [ ] `admin@medassist.co.ke` / `superadmin123` → super_admin role
 
-### End-to-End Demo Flow Test
-Run `python test_demo.py` pointed at production URL. All checks must pass:
-- [ ] Scene 1: Patient login → clinics list → Westlands profile → slots → booking created
-- [ ] Scene 2: Products list (Panadol KES 50, ORS KES 30) → order created
-- [ ] Scene 3: Dashboard stats → analytics (monthly + weekly) → today appointments → status update
-- [ ] Scene 4: Triage URGENT (chest pain) → Triage MILD (cough) → Triage URGENT (meningitis)
+### End-to-End Smoke Test
+Run `python test_smoke.py` pointed at production URL. All checks must pass:
+- [ ] Auth: patient login, clinic admin login
+- [ ] Clinics: list, profile, available slots
+- [ ] Booking: appointment created successfully
+- [ ] Orders: product catalogue, order placed
+- [ ] Dashboard: stats, analytics, appointments, status update
+- [ ] Triage: URGENT and MILD assessments return correct severity
 
 ---
 
@@ -96,53 +97,18 @@ Run `python test_demo.py` pointed at production URL. All checks must pass:
 
 ## T-2 Hours — Final Checks
 
-### Browser Prep
-- [ ] Chrome opened, zoom set to 90%
-- [ ] Three tabs pre-loaded:
-  - Tab 1: `https://medassist-ai.com` (landing page)
-  - Tab 2: `https://medassist-ai.com/dashboard` (Jane logged in)
-  - Tab 3: `https://medassist-ai.com/clinic-dashboard` (admin1 logged in)
-- [ ] DevTools closed
-- [ ] Browser history cleared (no autocomplete embarrassments)
-- [ ] Incognito mode as backup tab
+### Pre-Launch Verification
+- [ ] `python test_smoke.py` passes all checks against production URL
+- [ ] `https://medassist-ai.com` loads in < 3s
+- [ ] Login + booking flow tested end-to-end in browser
+- [ ] Mobile layout verified on 390px viewport
+- [ ] Error monitoring (Sentry) receiving events
 
-### Demo Machine
-- [ ] Laptop charged to 100%, charger plugged in
-- [ ] External display tested (HDMI/USB-C adaptor in bag)
-- [ ] Screen resolution set to 1920×1080
-- [ ] Notifications silenced (Focus mode / Do Not Disturb on)
-- [ ] Slack, email, and chat apps hidden/closed
-- [ ] VPN disabled (can slow connections)
-
-### Backup Plan
-- [ ] Recorded walkthrough video saved locally (screen recording of full demo)
-- [ ] Video is < 6 minutes, plays without audio dependencies
-- [ ] `python test_demo.py` pointed at localhost as fallback
-- [ ] Local backend running and tested: `python test_demo.py`
-
-### DEMO_SCRIPT.md
-- [ ] Printed or on second device
-- [ ] Recovery lines section reviewed
-- [ ] Q&A talking points memorized
-
----
-
-## T-0 — Day-Of
-
-- [ ] Arrive 20 minutes early; test display + internet connection
-- [ ] Run `python test_demo.py` one final time (production target)
-- [ ] Check `https://medassist-ai.com` loads in < 3s on venue WiFi
-- [ ] Water available at presentation station
-- [ ] Phone on silent
-
----
-
-## Post-Demo
-
-- [ ] Take database backup immediately after demo
-- [ ] Archive investor contact details
-- [ ] Follow up within 24 hours with one-pager PDF (`INVESTOR_ONE_PAGER.md`)
-- [ ] Note any questions that exposed product gaps → backlog
+### Go-Live
+- [ ] Remove or rotate seed accounts (or document they exist)
+- [ ] Set `ENVIRONMENT=production` in all configs
+- [ ] Confirm automated DB backups are running
+- [ ] DNS propagation confirmed
 
 ---
 
@@ -155,8 +121,8 @@ Run `python test_demo.py` pointed at production URL. All checks must pass:
 | Frontend 404s | Check Vercel deployment status; use local fallback |
 | Slow API | Kill heavy queries: `docker compose exec db psql -U medassist -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE state='idle in transaction';"` |
 | Cert expired | `docker compose --profile ssl run certbot renew && docker compose restart nginx` |
-| Lost demo credentials | `admin@medassist.co.ke` / `superadmin123` (super admin, works from any page) |
+| Lost admin access | `admin@medassist.co.ke` / `superadmin123` (super admin) |
 
 ---
 
-*Checklist version: May 2026 | Confidential*
+*MedAssist AI · Production Deployment Checklist*

@@ -610,7 +610,7 @@ export function MedicineOrderPage() {
           </button>
 
           <p className="text-[11px] text-center text-gray-400 pb-4">
-            Demo environment — no real payment is processed
+M-Pesa payment will be requested on your phone after confirmation
           </p>
         </form>
       </div>

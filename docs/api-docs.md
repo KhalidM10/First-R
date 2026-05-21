@@ -174,7 +174,7 @@ Update patient profile (name, DOB, allergies, chronic conditions, etc.)
 
 ---
 
-## Orders (Phase 1 — demo data)
+## Orders (Phase 1 — static catalogue)
 
 ### GET `/orders/pharmacies/search?medicine=paracetamol`
 Search for pharmacies carrying a medicine.

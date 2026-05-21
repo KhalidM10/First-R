@@ -66,7 +66,7 @@ function CountUp({ target, suffix = '', prefix = '' }: { target: number; suffix?
   return <span ref={ref}>{prefix}{val.toLocaleString()}{suffix}</span>
 }
 
-// ── Interactive triage demo ───────────────────────────────────────────────────
+// ── Interactive triage ────────────────────────────────────────────────────────
 const SYMPTOM_CHIPS = [
   { id: 'chest_pain',   label: 'Chest Pain',            tier: 3 },
   { id: 'diff_breath',  label: 'Difficulty Breathing',  tier: 3 },
@@ -595,14 +595,14 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── 5. TRIAGE DEMO ───────────────────────────────────────────────── */}
-      <section id="triage-demo" style={{ background: '#F0FDF4', padding: '100px 0' }}>
+      {/* ── 5. AI TRIAGE ─────────────────────────────────────────────────── */}
+      <section id="ai-triage" style={{ background: '#F0FDF4', padding: '100px 0' }}>
         <div style={{ ...W, maxWidth: 800, margin: '0 auto', padding: '0 24px' }}>
           <FadeIn>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#D1FAE5', border: '1px solid #6EE7B7', borderRadius: 100, padding: '5px 14px', marginBottom: 20 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#059669', boxShadow: '0 0 6px #059669' }} />
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#065F46', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Live Demo</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#065F46', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Try It Live</span>
               </div>
               <h2 style={{ fontSize: 'clamp(26px, 4vw, 44px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 16 }}>
                 Try the AI Triage Engine →

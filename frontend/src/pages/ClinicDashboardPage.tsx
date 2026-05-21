@@ -12,15 +12,16 @@ interface DashStats {
   confirmed: number
   completed: number
   total_appointments: number
+  week_revenue_kes: number
 }
 
-const DEMO_RECENT = [
-  { patient: 'Jane Wanjiku',    reason: 'Malaria follow-up',   time: '09:00', status: 'confirmed' },
-  { patient: 'Brian Otieno',    reason: 'Diabetes review',     time: '09:30', status: 'confirmed' },
-  { patient: 'Amina Hassan',    reason: 'Fever + headache',    time: '10:00', status: 'pending'   },
-  { patient: 'Samuel Mwangi',   reason: 'Chest pain eval',     time: '11:00', status: 'pending'   },
-  { patient: 'Grace Njoroge',   reason: 'Antenatal checkup',   time: '13:00', status: 'completed' },
-]
+interface Appointment {
+  id: string
+  patient_name: string
+  reason: string
+  appointment_time: string
+  status: string
+}
 
 const STATUS_STYLES: Record<string, React.CSSProperties> = {
   confirmed: { backgroundColor: '#f0fdf4', color: '#15803d' },
@@ -35,10 +36,20 @@ export function ClinicDashboardPage() {
     return <Navigate to="/dashboard" replace />
   }
 
+  const today = new Date().toISOString().split('T')[0]
+
   const { data: stats } = useQuery<DashStats>({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
       const { data } = await api.get('/dashboard/stats')
+      return data
+    },
+  })
+
+  const { data: appointments = [] } = useQuery<Appointment[]>({
+    queryKey: ['dashboard-appointments-today', today],
+    queryFn: async () => {
+      const { data } = await api.get(`/dashboard/appointments?appt_date=${today}&limit=10`)
       return data
     },
   })
@@ -124,26 +135,30 @@ export function ClinicDashboardPage() {
             opacity: 0,
           }}
         >
-          {DEMO_RECENT.map((appt, i) => (
+          {appointments.length === 0 ? (
+            <div className="px-5 py-8 text-center text-sm text-stone-400">
+              No appointments scheduled for today
+            </div>
+          ) : appointments.map((appt, i) => (
             <div
-              key={i}
+              key={appt.id}
               className="flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-stone-50"
               style={i > 0 ? { borderTop: '1px solid #f4f3ef' } : {}}
             >
               <div className="h-8 w-8 shrink-0 rounded-full bg-stone-100 flex items-center justify-center">
                 <span className="text-xs font-bold text-stone-500">
-                  {appt.patient.split(' ').map(w => w[0]).join('')}
+                  {appt.patient_name.split(' ').map((w: string) => w[0]).join('')}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-[#1a1a18] truncate">{appt.patient}</p>
+                <p className="text-sm font-semibold text-[#1a1a18] truncate">{appt.patient_name}</p>
                 <p className="text-xs text-stone-400 truncate">{appt.reason}</p>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-xs font-bold text-stone-600">{appt.time}</p>
+                <p className="text-xs font-bold text-stone-600">{appt.appointment_time}</p>
                 <span
                   className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                  style={STATUS_STYLES[appt.status]}
+                  style={STATUS_STYLES[appt.status] ?? {}}
                 >
                   {appt.status}
                 </span>
@@ -166,8 +181,10 @@ export function ClinicDashboardPage() {
           <Activity className="h-5 w-5 text-green-400" />
           <p className="text-sm font-bold text-white">Revenue Analytics</p>
         </div>
-        <p className="text-2xl font-black text-white">KES 48,500</p>
-        <p className="text-xs text-white/50 mt-0.5">This month · from appointments</p>
+        <p className="text-2xl font-black text-white">
+          KES {(stats?.week_revenue_kes ?? 0).toLocaleString()}
+        </p>
+        <p className="text-xs text-white/50 mt-0.5">This week · from appointments</p>
         <div className="mt-4 h-1.5 rounded-full bg-white/10">
           <div className="h-full w-3/4 rounded-full bg-green-400" />
         </div>

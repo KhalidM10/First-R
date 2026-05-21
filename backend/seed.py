@@ -1,13 +1,10 @@
 """
-Demo seed v2 — investor presentation quality.
+Seed script — populates the database with initial data.
 
-Upgrades over v1:
-  • 13 clinics (original 8 + 5 new requested locations)
-  • 10 patients with richer profiles
-  • Appointments seeded for TODAY (visible in clinic dashboard demo)
-  • 2,400 anonymised triage sessions (45% mild / 40% moderate / 15% urgent)
-  • 90 days of ClinicAnalytics (powers the 6-month revenue chart)
-  • Updated OTC product list with requested items and prices
+Includes:
+  • 13 clinics across Kenya (Nairobi, Mombasa, Kisumu, Nakuru, Eldoret)
+  • 10 patient accounts
+  • Appointments, triage sessions, analytics, and OTC product catalogue
 
 Run from backend/ directory:
     python reset_db.py   # drops + recreates schema first
@@ -29,7 +26,7 @@ from app.models.product import Product
 from app.models.analytics import ClinicAnalytics
 import app.models  # noqa — registers all mappers
 
-random.seed(42)  # reproducible demo data
+random.seed(42)
 
 WEEKDAYS      = ["monday", "tuesday", "wednesday", "thursday", "friday"]
 WEEKDAYS_SAT  = WEEKDAYS + ["saturday"]
@@ -529,7 +526,7 @@ def seed():
             patients.append(patient)
 
         # ── Appointments ──────────────────────────────────────────────────────
-        # Critical: multiple appointments TODAY for Westlands (admin1's clinic dashboard demo)
+        # Appointments for today — used to populate the clinic dashboard
         today_appts = [
             # (patient, clinic, doctor, time, status, reason, amount_kes)
             (patients[0], westlands, w_docs[0], time(8, 30),  AppointmentStatus.CONFIRMED,  "Fever and persistent headache — 3 days",               1500),
@@ -572,7 +569,7 @@ def seed():
                 payment_status="paid" if status == AppointmentStatus.COMPLETED else "pending",
             ))
 
-        # ── Detailed triage sessions (for demo scenarios) ─────────────────────
+        # ── Detailed triage sessions ──────────────────────────────────────────
         detail_sessions = [
             {
                 "user": patients[0], "county": "Nairobi", "age": 32, "gender": "female",
@@ -783,7 +780,7 @@ def seed():
 
         total_doctors = sum(len(v) for v in doctor_map.values())
         print("\n" + "=" * 60)
-        print("  DATABASE SEEDED - INVESTOR DEMO READY")
+        print("  DATABASE SEEDED")
         print("=" * 60)
         print(f"  Clinics:      {len(clinics)} (Nairobi × 8, Mombasa × 3, Kisumu × 2)")
         print(f"  Doctors:      {total_doctors}")
@@ -793,7 +790,7 @@ def seed():
         print(f"  Products:     {len(PRODUCTS)} OTC items")
         print(f"  Analytics:    90 days × {len(clinics)} clinics = {len(analytics_rows)} rows")
         print("=" * 60)
-        print("  DEMO CREDENTIALS")
+        print("  SEED ACCOUNTS")
         print("  Super Admin:  admin@medassist.co.ke          / superadmin123")
         print("  Clinic Admin: admin1@demo.medassist.co.ke    / demo1234")
         print("                (Westlands Family Medical Centre)")

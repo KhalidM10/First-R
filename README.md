@@ -1,7 +1,7 @@
 # MedAssist AI
 
 **Kenya-first AI health guidance and clinic management platform.**
-Series A investor demo MVP — built with FastAPI + React + PostgreSQL.
+Built with FastAPI + React + PostgreSQL.
 
 ---
 
@@ -49,7 +49,7 @@ cp .env.example .env
 # 3. Start all services (db + backend + frontend + nginx)
 docker compose up -d --build
 
-# 4. Seed demo data (first time only)
+# 4. Seed initial data (first time only)
 docker compose exec backend python seed.py
 
 # 5. Open the app
@@ -92,7 +92,7 @@ pip install -r requirements.txt
 cp ../.env.example .env
 # Edit .env — set DATABASE_URL and SECRET_KEY
 
-# Create tables + load demo data
+# Create tables + seed initial data
 python reset_db.py
 python seed.py
 
@@ -114,7 +114,7 @@ App: http://localhost:5173
 
 ---
 
-## Demo Credentials
+## Default Seed Accounts
 
 | Role | Email | Password |
 |------|-------|----------|
@@ -122,14 +122,16 @@ App: http://localhost:5173
 | Clinic Admin | admin1@demo.medassist.co.ke | demo1234 |
 | Super Admin | admin@medassist.co.ke | superadmin123 |
 
+> These accounts are created by `seed.py` for local development. Remove or change them before going live.
+
 ---
 
 ## Running Tests
 
 ```bash
-# Backend smoke test (all 4 demo scenes)
+# Backend smoke test
 cd backend
-python test_demo.py
+python test_smoke.py
 
 # Frontend type check
 cd frontend
@@ -143,7 +145,7 @@ npm run build
 
 ## Production Deployment
 
-See **`DEPLOYMENT_CHECKLIST.md`** for the complete pre-demo deployment runbook.
+See **`DEPLOYMENT_CHECKLIST.md`** for the complete production deployment runbook.
 
 ### Architecture overview
 
@@ -256,9 +258,9 @@ backend/
 │   ├── config.py        Pydantic Settings (reads .env)
 │   ├── database.py      SQLAlchemy engine + session
 │   └── main.py          FastAPI app, middleware, route registration
-├── seed.py              Demo data (13 clinics, 2,400 triage sessions, 90-day analytics)
+├── seed.py              Initial data (13 clinics, triage sessions, 90-day analytics)
 ├── reset_db.py          Drop + recreate all tables
-├── test_demo.py         End-to-end smoke test (all 4 demo scenes)
+├── test_smoke.py        End-to-end smoke test
 └── Dockerfile
 
 frontend/
@@ -284,4 +286,4 @@ All medical logic is conservative and escalates to professional care when uncert
 
 ---
 
-*MedAssist AI · Kenya-first health tech · Series A 2026*
+*MedAssist AI · Kenya-first health tech*

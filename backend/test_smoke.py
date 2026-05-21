@@ -1,4 +1,4 @@
-"""Quick smoke test for all investor demo scenes."""
+"""End-to-end smoke test — covers auth, triage, booking, orders, and dashboard."""
 import requests
 import datetime
 
@@ -175,4 +175,4 @@ for symptoms, age, gender, expected in cases:
     match = "OK" if expected in level else "WARN"
     print(f"[{match}] Triage                       symptoms={symptoms[0]}...  level={level}  expected={expected}")
 
-print("\n=== ALL DEMO SCENES PASSED ===")
+print("\n=== ALL SMOKE TESTS PASSED ===")

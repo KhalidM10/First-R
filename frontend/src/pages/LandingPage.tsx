@@ -4,13 +4,13 @@ import {
   Activity, Calendar, Pill, BarChart2, ArrowRight,
   CheckCircle2, Zap, MapPin, Clock, Users,
   TrendingUp, Heart, Brain, Stethoscope, Star, Menu, X,
-  ChevronRight, AlertTriangle, Info,
+  ChevronRight, AlertTriangle, Shield, Smartphone,
+  Quote,
 } from 'lucide-react'
+import { TriageDemo } from '../components/landing/TriageDemo'
 
-// ── Fonts & base ──────────────────────────────────────────────────────────────
 const INTER = "'Inter', system-ui, -apple-system, sans-serif"
 
-// ── Scroll-triggered fade-in ─────────────────────────────────────────────────
 function useFadeIn(threshold = 0.12) {
   const ref = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
@@ -46,7 +46,6 @@ function FadeIn({ children, delay = 0, className = '', up = true }: {
   )
 }
 
-// ── Counter animation ─────────────────────────────────────────────────────────
 function CountUp({ target, suffix = '', prefix = '' }: { target: number; suffix?: string; prefix?: string }) {
   const [val, setVal] = useState(0)
   const { ref, visible } = useFadeIn()
@@ -66,71 +65,14 @@ function CountUp({ target, suffix = '', prefix = '' }: { target: number; suffix?
   return <span ref={ref}>{prefix}{val.toLocaleString()}{suffix}</span>
 }
 
-// ── Interactive triage ────────────────────────────────────────────────────────
-const SYMPTOM_CHIPS = [
-  { id: 'chest_pain',   label: 'Chest Pain',            tier: 3 },
-  { id: 'diff_breath',  label: 'Difficulty Breathing',  tier: 3 },
-  { id: 'high_fever',   label: 'High Fever',            tier: 2 },
-  { id: 'headache',     label: 'Severe Headache',       tier: 2 },
-  { id: 'fatigue',      label: 'Fatigue',               tier: 1 },
-  { id: 'cough',        label: 'Cough',                 tier: 1 },
-  { id: 'nausea',       label: 'Nausea',                tier: 1 },
-  { id: 'sore_throat',  label: 'Sore Throat',           tier: 1 },
-]
-
-type TriageLevel = 'URGENT' | 'MODERATE' | 'MILD'
-interface TriageResult {
-  level: TriageLevel
-  accent: string
-  bg: string
-  border: string
-  icon: React.ElementType
-  title: string
-  recommendation: string
-  action: string
-  href: string
-}
-
-function computeTriage(ids: string[]): TriageResult | null {
-  if (!ids.length) return null
-  const chips = ids.map(id => SYMPTOM_CHIPS.find(c => c.id === id)!)
-  const maxTier = Math.max(...chips.map(c => c.tier))
-  const lowCount  = chips.filter(c => c.tier === 1).length
-
-  if (maxTier >= 3) return {
-    level: 'URGENT', accent: '#DC2626', bg: '#FEF2F2', border: '#FCA5A5',
-    icon: AlertTriangle,
-    title: 'Seek Emergency Care Immediately',
-    recommendation: 'Your symptoms may indicate a serious or life-threatening condition. Go to the nearest emergency clinic or call an ambulance now. Do not drive yourself.',
-    action: 'Find Emergency Clinic', href: '/clinics',
-  }
-  if (maxTier >= 2 || lowCount >= 3 || (ids.includes('high_fever') && lowCount >= 1)) return {
-    level: 'MODERATE', accent: '#D97706', bg: '#FFFBEB', border: '#FCD34D',
-    icon: Info,
-    title: 'See a Doctor Within 24 Hours',
-    recommendation: 'Your symptoms suggest a condition that needs medical evaluation. Book an appointment with a clinic near you and monitor for any worsening.',
-    action: 'Book Appointment', href: '/clinics',
-  }
-  return {
-    level: 'MILD', accent: '#059669', bg: '#F0FDF4', border: '#86EFAC',
-    icon: CheckCircle2,
-    title: 'Likely Mild — Self-Care First',
-    recommendation: 'Your symptoms appear manageable at home. Rest well, stay hydrated, and take over-the-counter medication if needed. Seek care if symptoms worsen or persist beyond 48 hours.',
-    action: 'Order Medicine', href: '/medicines',
-  }
-}
-
-// ── Phone Mockup ──────────────────────────────────────────────────────────────
 function PhoneMockup() {
   return (
     <div className="relative mx-auto" style={{ width: 260, fontFamily: INTER }}>
-      {/* Glow */}
       <div style={{
         position: 'absolute', inset: -40, borderRadius: '50%',
         background: 'radial-gradient(ellipse, rgba(30,64,175,0.35) 0%, transparent 70%)',
         filter: 'blur(30px)', zIndex: 0,
       }} />
-      {/* Floating notification */}
       <div style={{
         position: 'absolute', top: 24, right: -56, zIndex: 10, minWidth: 160,
         background: 'white', borderRadius: 14, padding: '8px 12px',
@@ -142,7 +84,6 @@ function PhoneMockup() {
         </div>
         <p style={{ fontSize: 9, color: '#6b7280', lineHeight: 1.4 }}>Dr. Kamau Njoroge · Today 10:30 AM</p>
       </div>
-      {/* Phone frame */}
       <div style={{
         position: 'relative', zIndex: 1,
         width: 260, height: 520, borderRadius: 40,
@@ -150,11 +91,8 @@ function PhoneMockup() {
         boxShadow: '0 40px 100px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.06)',
         overflow: 'hidden',
       }}>
-        {/* Notch */}
         <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 80, height: 24, background: '#111827', borderRadius: '0 0 16px 16px', zIndex: 10 }} />
-        {/* Screen */}
         <div style={{ background: '#f4f3ef', height: '100%', overflow: 'hidden', paddingTop: 28 }}>
-          {/* Header */}
           <div style={{ padding: '12px 14px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <div style={{ width: 22, height: 22, background: '#0d1f10', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -168,10 +106,8 @@ function PhoneMockup() {
               <span style={{ fontSize: 9, fontWeight: 700, color: '#374151' }}>J</span>
             </div>
           </div>
-          {/* Content */}
           <div style={{ padding: '0 12px', overflow: 'hidden' }}>
             <p style={{ fontSize: 9, color: '#9ca3af', marginBottom: 10 }}>Good morning, Jane · Nairobi</p>
-            {/* Triage result */}
             <div style={{ background: '#FEF3C7', borderRadius: 14, padding: '10px 12px', marginBottom: 8, border: '1px solid #FDE68A' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
                 <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#F59E0B' }} />
@@ -179,7 +115,6 @@ function PhoneMockup() {
               </div>
               <p style={{ fontSize: 8.5, color: '#78350F', lineHeight: 1.5 }}>Consider seeing a doctor within 24 hours. Symptoms suggest possible infection.</p>
             </div>
-            {/* Nearby clinics */}
             <div style={{ background: 'white', borderRadius: 14, padding: '10px 12px', marginBottom: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
               <p style={{ fontSize: 9, fontWeight: 700, color: '#0f172a', marginBottom: 7 }}>Nearby Clinics</p>
               {[['Westlands Medical', '0.8 km', 1500], ['City Health Clinic', '1.2 km', 1200]].map(([name, dist, fee]) => (
@@ -197,7 +132,6 @@ function PhoneMockup() {
                 <span style={{ fontSize: 8.5, fontWeight: 700, color: 'white' }}>Book Appointment</span>
               </div>
             </div>
-            {/* Bottom nav */}
             <div style={{ display: 'flex', justifyContent: 'space-around', background: 'white', borderRadius: 14, padding: '7px 4px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
               {[{ l: 'Home', a: true }, { l: 'Clinics', a: false }, { l: 'Rx', a: false }, { l: 'Me', a: false }].map(({ l, a }) => (
                 <div key={l} style={{ textAlign: 'center', padding: '0 8px' }}>
@@ -213,7 +147,6 @@ function PhoneMockup() {
   )
 }
 
-// ── Dashboard Mockup ──────────────────────────────────────────────────────────
 function DashboardMockup() {
   const bars = [45, 62, 58, 71, 80, 76, 90]
   return (
@@ -221,7 +154,6 @@ function DashboardMockup() {
       background: '#1e293b', borderRadius: 16, overflow: 'hidden',
       boxShadow: '0 40px 80px rgba(0,0,0,0.4)', fontFamily: INTER,
     }}>
-      {/* Browser chrome */}
       <div style={{ background: '#0f172a', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
         <div style={{ display: 'flex', gap: 5 }}>
           {['#ef4444','#f59e0b','#22c55e'].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: '50%', background: c }} />)}
@@ -230,9 +162,7 @@ function DashboardMockup() {
           <span style={{ fontSize: 9, color: '#4b5563' }}>app.medassist.co.ke/clinic-dashboard</span>
         </div>
       </div>
-      {/* Dashboard content */}
       <div style={{ display: 'flex', height: 280 }}>
-        {/* Sidebar */}
         <div style={{ width: 44, background: '#0d1f10', padding: '12px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
           {[BarChart2, Calendar, Activity, Pill].map((Icon, i) => (
             <div key={i} style={{ width: 28, height: 28, borderRadius: 8, background: i === 0 ? 'rgba(74,222,128,0.15)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -240,9 +170,7 @@ function DashboardMockup() {
             </div>
           ))}
         </div>
-        {/* Main */}
         <div style={{ flex: 1, background: '#f4f3ef', padding: 14, overflow: 'hidden' }}>
-          {/* Stat cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 12 }}>
             {[
               { label: "Today's Appts", value: '12', color: '#1E40AF' },
@@ -255,12 +183,11 @@ function DashboardMockup() {
               </div>
             ))}
           </div>
-          {/* Mini chart */}
           <div style={{ background: 'white', borderRadius: 10, padding: '10px 12px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
             <p style={{ fontSize: 8.5, fontWeight: 700, color: '#0f172a', marginBottom: 8 }}>Weekly Appointments</p>
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 5, height: 50 }}>
               {bars.map((h, i) => (
-                <div key={i} style={{ flex: 1, borderRadius: '3px 3px 0 0', background: i === bars.length - 1 ? '#1E40AF' : '#DBEAFE', height: `${(h / 100) * 100}%`, transition: 'all 0.5s ease' }} />
+                <div key={i} style={{ flex: 1, borderRadius: '3px 3px 0 0', background: i === bars.length - 1 ? '#1E40AF' : '#DBEAFE', height: `${(h / 100) * 100}%` }} />
               ))}
             </div>
           </div>
@@ -270,7 +197,6 @@ function DashboardMockup() {
   )
 }
 
-// ── Navbar ────────────────────────────────────────────────────────────────────
 function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -293,16 +219,14 @@ function Navbar() {
       fontFamily: INTER,
     }}>
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        {/* Logo */}
         <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
           <div style={{ width: 32, height: 32, background: '#0d1f10', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="18" height="18" viewBox="0 0 22 22" fill="none"><path d="M1 11L6 11L8 7L11 16L13 6L15 11L21 11" stroke="#4ade80" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </div>
           <span style={{ fontSize: 15, fontWeight: 800, color: scrolled ? '#0f172a' : 'white', letterSpacing: '-0.02em' }}>MedAssist AI</span>
         </button>
-        {/* Desktop nav */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 32 }} className="hidden md:flex">
-          {[['Features', 'solution'], ['How It Works', 'how-it-works'], ['For Clinics', 'for-clinics'], ['Metrics', 'traction']].map(([label, id]) => (
+          {[['For Patients', 'solution'], ['How It Works', 'how-it-works'], ['For Clinics', 'for-clinics'], ['Pricing', 'pricing']].map(([label, id]) => (
             <button key={id} onClick={() => scroll(id)} style={{
               background: 'none', border: 'none', cursor: 'pointer', padding: 0,
               fontSize: 14, fontWeight: 500, color: scrolled ? '#374151' : 'rgba(255,255,255,0.8)',
@@ -310,7 +234,6 @@ function Navbar() {
             }}>{label}</button>
           ))}
         </div>
-        {/* CTAs */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }} className="hidden md:flex">
           <Link to="/login" style={{
             fontSize: 13, fontWeight: 600, color: scrolled ? '#374151' : 'rgba(255,255,255,0.8)',
@@ -324,15 +247,13 @@ function Navbar() {
             boxShadow: '0 2px 8px rgba(30,64,175,0.4)', transition: 'all 0.2s',
           }}>Get Started</Link>
         </div>
-        {/* Mobile hamburger */}
         <button onClick={() => setMobileOpen(v => !v)} style={{ display: 'none', background: 'none', border: 'none', cursor: 'pointer', color: scrolled ? '#374151' : 'white', padding: 4 }} className="flex md:hidden">
           {mobileOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
-      {/* Mobile menu */}
       {mobileOpen && (
         <div style={{ background: 'white', borderTop: '1px solid #f1f0ec', padding: '16px 24px 20px' }}>
-          {[['Features', 'solution'], ['How It Works', 'how-it-works'], ['For Clinics', 'for-clinics'], ['Metrics', 'traction']].map(([label, id]) => (
+          {[['For Patients', 'solution'], ['How It Works', 'how-it-works'], ['For Clinics', 'for-clinics'], ['Pricing', 'pricing']].map(([label, id]) => (
             <button key={id} onClick={() => scroll(id)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: 15, fontWeight: 500, color: '#374151', padding: '10px 0', borderBottom: '1px solid #f8f7f4' }}>{label}</button>
           ))}
           <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
@@ -345,30 +266,10 @@ function Navbar() {
   )
 }
 
-// ── Main LandingPage ──────────────────────────────────────────────────────────
 export function LandingPage() {
-  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([])
-  const [analyzing, setAnalyzing] = useState(false)
-  const [triageResult, setTriageResult] = useState<TriageResult | null>(null)
+  const [billingAnnual, setBillingAnnual] = useState(true)
   const [investorEmail, setInvestorEmail] = useState('')
   const [deckSent, setDeckSent] = useState(false)
-
-  function toggleSymptom(id: string) {
-    setTriageResult(null)
-    setSelectedSymptoms(prev =>
-      prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
-    )
-  }
-
-  function runTriage() {
-    if (!selectedSymptoms.length) return
-    setAnalyzing(true)
-    setTriageResult(null)
-    setTimeout(() => {
-      setAnalyzing(false)
-      setTriageResult(computeTriage(selectedSymptoms))
-    }, 1200)
-  }
 
   function handleDeckRequest(e: React.FormEvent) {
     e.preventDefault()
@@ -378,30 +279,32 @@ export function LandingPage() {
 
   const W = { maxWidth: 1200, margin: '0 auto', padding: '0 24px' }
 
+  const pricing = {
+    patient: { monthly: 0, annual: 0 },
+    pro: { monthly: 4999, annual: 3999 },
+    enterprise: { monthly: 14999, annual: 11999 },
+  }
+
   return (
     <div style={{ fontFamily: INTER, background: 'white', color: '#0f172a', overflowX: 'hidden' }}>
       <Navbar />
 
-      {/* ── 1. HERO ───────────────────────────────────────────────────────── */}
+      {/* ── 1. HERO ─────────────────────────────────────────────────────────── */}
       <section style={{
         background: 'linear-gradient(135deg, #080f20 0%, #0f1e3d 40%, #132c5e 70%, #1a3a7a 100%)',
         minHeight: '100vh', display: 'flex', alignItems: 'center', paddingTop: 68,
         position: 'relative', overflow: 'hidden',
       }}>
-        {/* Background grid */}
         <div style={{
           position: 'absolute', inset: 0, pointerEvents: 'none',
           backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
           backgroundSize: '48px 48px',
         }} />
-        {/* Glow orbs */}
         <div style={{ position: 'absolute', top: '20%', left: '10%', width: 400, height: 400, background: 'radial-gradient(circle, rgba(30,64,175,0.2) 0%, transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: '10%', right: '5%', width: 500, height: 500, background: 'radial-gradient(circle, rgba(5,150,105,0.12) 0%, transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none' }} />
 
         <div style={{ ...W, width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center', padding: '80px 24px' }}>
-          {/* Left */}
           <div>
-            {/* Eyebrow */}
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
               background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.25)',
@@ -423,7 +326,6 @@ export function LandingPage() {
               MedAssist AI connects patients with clinics through intelligent triage, instant appointment booking, and seamless medicine ordering — all via M-Pesa.
             </p>
 
-            {/* CTAs */}
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 48 }}>
               <Link to="/register" style={{
                 display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -443,7 +345,6 @@ export function LandingPage() {
               </button>
             </div>
 
-            {/* Trust badges */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {['Rule-Based AI', 'HIPAA Aware', 'M-Pesa Ready', 'Kenya-First'].map(badge => (
                 <div key={badge} style={{
@@ -458,14 +359,13 @@ export function LandingPage() {
             </div>
           </div>
 
-          {/* Right — phone mockup */}
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <PhoneMockup />
           </div>
         </div>
       </section>
 
-      {/* ── 2. PROBLEM ───────────────────────────────────────────────────── */}
+      {/* ── 2. PROBLEM ──────────────────────────────────────────────────────── */}
       <section id="problem" style={{ background: 'white', padding: '100px 0' }}>
         <div style={W}>
           <FadeIn>
@@ -493,7 +393,6 @@ export function LandingPage() {
                 <div style={{
                   background: 'white', borderRadius: 20, padding: '32px 28px',
                   border: '1px solid #f1f0ec', boxShadow: '0 4px 24px rgba(0,0,0,0.05)',
-                  transition: 'all 0.3s', cursor: 'default',
                 }}>
                   <div style={{ width: 44, height: 44, background: bg, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
                     <Icon size={20} color={color} />
@@ -513,20 +412,20 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── 3. SOLUTION ──────────────────────────────────────────────────── */}
+      {/* ── 3. FOR PATIENTS ─────────────────────────────────────────────────── */}
       <section id="solution" style={{ background: '#EFF6FF', padding: '100px 0' }}>
         <div style={W}>
           <FadeIn>
             <div style={{ textAlign: 'center', marginBottom: 64 }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#DBEAFE', border: '1px solid #93C5FD', borderRadius: 100, padding: '5px 14px', marginBottom: 20 }}>
-                <Zap size={12} color="#1E40AF" />
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#1E40AF', letterSpacing: '0.06em', textTransform: 'uppercase' }}>The Solution</span>
+                <Smartphone size={12} color="#1E40AF" />
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#1E40AF', letterSpacing: '0.06em', textTransform: 'uppercase' }}>For Patients</span>
               </div>
               <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 16 }}>
-                MedAssist AI Changes Everything
+                Everything You Need, One App
               </h2>
               <p style={{ fontSize: 17, color: '#4b5563', maxWidth: 540, margin: '0 auto' }}>
-                One platform connecting every Kenyan with quality healthcare — intelligent, instant, and affordable.
+                From knowing when to see a doctor to ordering medicine — MedAssist has you covered.
               </p>
             </div>
           </FadeIn>
@@ -536,7 +435,7 @@ export function LandingPage() {
               { icon: Brain, title: 'AI Symptom Triage', desc: 'Know if you need a doctor in 60 seconds. Our rule-based engine analyzes your symptoms and gives clear, safe guidance — not a diagnosis.', color: '#7C3AED', bg: '#F5F3FF', badge: 'Core Feature' },
               { icon: Calendar, title: 'Smart Appointment Booking', desc: 'Book clinic appointments without a single phone call. See real-time availability, pick your doctor, and pay with M-Pesa.', color: '#1E40AF', bg: '#EFF6FF', badge: 'Live' },
               { icon: Pill, title: 'OTC Medicine Ordering', desc: 'Order genuine OTC medicines from verified pharmacies in your area. Delivery or clinic pickup — your choice.', color: '#059669', bg: '#F0FDF4', badge: 'Live' },
-              { icon: BarChart2, title: 'Clinic Management SaaS', desc: 'Full-featured dashboard for clinic admins — appointments, revenue analytics, patient data, subscription management.', color: '#D97706', bg: '#FFFBEB', badge: 'For Clinics' },
+              { icon: Shield, title: 'Secure Health Records', desc: 'Your triage history, appointment records, and allergies — safely stored and accessible only to you and your care providers.', color: '#D97706', bg: '#FFFBEB', badge: 'Patients' },
             ].map(({ icon: Icon, title, desc, color, bg, badge }, i) => (
               <FadeIn key={title} delay={i * 0.1}>
                 <div style={{
@@ -547,7 +446,7 @@ export function LandingPage() {
                     <div style={{ width: 48, height: 48, background: bg, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <Icon size={22} color={color} />
                     </div>
-                    <span style={{ fontSize: 10, fontWeight: 700, color, background: bg, borderRadius: 100, padding: '4px 10px', border: `1px solid ${bg}` }}>{badge}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color, background: bg, borderRadius: 100, padding: '4px 10px' }}>{badge}</span>
                   </div>
                   <h3 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', marginBottom: 10, letterSpacing: '-0.01em' }}>{title}</h3>
                   <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.65 }}>{desc}</p>
@@ -558,7 +457,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── 4. HOW IT WORKS ──────────────────────────────────────────────── */}
+      {/* ── 4. HOW IT WORKS ─────────────────────────────────────────────────── */}
       <section id="how-it-works" style={{ background: 'white', padding: '100px 0' }}>
         <div style={W}>
           <FadeIn>
@@ -571,7 +470,6 @@ export function LandingPage() {
           </FadeIn>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, position: 'relative' }}>
-            {/* Connecting line */}
             <div style={{ position: 'absolute', top: 52, left: '17%', right: '17%', height: 2, background: 'linear-gradient(90deg, #DBEAFE, #1E40AF, #DBEAFE)', zIndex: 0, borderRadius: 1 }} />
             {[
               { step: '01', icon: Activity, title: 'Describe Your Symptoms', desc: 'Select or type your symptoms into the AI triage engine. Takes under 60 seconds.', color: '#1E40AF', bg: '#EFF6FF' },
@@ -595,122 +493,33 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── 5. AI TRIAGE ─────────────────────────────────────────────────── */}
+      {/* ── 5. LIVE TRIAGE DEMO ─────────────────────────────────────────────── */}
       <section id="ai-triage" style={{ background: '#F0FDF4', padding: '100px 0' }}>
-        <div style={{ ...W, maxWidth: 800, margin: '0 auto', padding: '0 24px' }}>
+        <div style={{ ...W, maxWidth: 860, margin: '0 auto', padding: '0 24px' }}>
           <FadeIn>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#D1FAE5', border: '1px solid #6EE7B7', borderRadius: 100, padding: '5px 14px', marginBottom: 20 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#059669', boxShadow: '0 0 6px #059669' }} />
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#065F46', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Try It Live</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#065F46', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Try It Live · Real Backend</span>
               </div>
               <h2 style={{ fontSize: 'clamp(26px, 4vw, 44px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 16 }}>
-                Try the AI Triage Engine →
+                Try the AI Triage Engine
               </h2>
-              <p style={{ fontSize: 16, color: '#374151' }}>Select any symptoms you're experiencing and get an instant assessment.</p>
+              <p style={{ fontSize: 16, color: '#374151', maxWidth: 480, margin: '0 auto' }}>
+                Select your symptoms and get an instant AI-powered assessment — connected to our live backend.
+              </p>
             </div>
           </FadeIn>
 
           <FadeIn delay={0.1}>
-            <div style={{ background: 'white', borderRadius: 24, padding: '36px', boxShadow: '0 8px 48px rgba(5,150,105,0.1)', border: '1px solid #D1FAE5' }}>
-              {/* Symptom chips */}
-              <p style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Select your symptoms</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 28 }}>
-                {SYMPTOM_CHIPS.map(({ id, label, tier }) => {
-                  const sel = selectedSymptoms.includes(id)
-                  const urgentColor = tier === 3 ? '#DC2626' : tier === 2 ? '#D97706' : '#1E40AF'
-                  return (
-                    <button
-                      key={id}
-                      onClick={() => toggleSymptom(id)}
-                      style={{
-                        padding: '9px 18px', borderRadius: 100, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                        border: `1.5px solid ${sel ? urgentColor : '#e5e7eb'}`,
-                        background: sel ? `${urgentColor}18` : 'white',
-                        color: sel ? urgentColor : '#6b7280',
-                        transition: 'all 0.2s',
-                        boxShadow: sel ? `0 2px 12px ${urgentColor}22` : 'none',
-                      }}
-                    >
-                      {label}
-                    </button>
-                  )
-                })}
-              </div>
-
-              {/* Analyse button */}
-              <button
-                onClick={runTriage}
-                disabled={!selectedSymptoms.length || analyzing}
-                style={{
-                  width: '100%', padding: '14px', borderRadius: 12, fontSize: 15, fontWeight: 700,
-                  background: selectedSymptoms.length ? '#059669' : '#e5e7eb',
-                  color: selectedSymptoms.length ? 'white' : '#9ca3af',
-                  border: 'none', cursor: selectedSymptoms.length ? 'pointer' : 'not-allowed',
-                  transition: 'all 0.2s', boxShadow: selectedSymptoms.length ? '0 4px 16px rgba(5,150,105,0.35)' : 'none',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                }}
-              >
-                {analyzing ? (
-                  <>
-                    <div style={{ width: 16, height: 16, borderRadius: '50%', border: '2.5px solid rgba(255,255,255,0.4)', borderTopColor: 'white', animation: 'spin 0.8s linear infinite' }} />
-                    Analyzing symptoms…
-                  </>
-                ) : (
-                  <><Activity size={16} /> Analyze Symptoms</>
-                )}
-              </button>
-
-              {/* Result */}
-              {triageResult && (
-                <div style={{
-                  marginTop: 24, borderRadius: 16, padding: '20px 24px',
-                  background: triageResult.bg, border: `1.5px solid ${triageResult.border}`,
-                  animation: 'fadeIn 0.4s ease',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                    <triageResult.icon size={20} color={triageResult.accent} />
-                    <span style={{ fontSize: 13, fontWeight: 800, color: triageResult.accent, letterSpacing: '0.05em' }}>
-                      {triageResult.level}
-                    </span>
-                  </div>
-                  <h3 style={{ fontSize: 17, fontWeight: 700, color: '#0f172a', marginBottom: 8 }}>{triageResult.title}</h3>
-                  <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.6, marginBottom: 16 }}>{triageResult.recommendation}</p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <Link to="/register" style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none',
-                      padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 700,
-                      background: triageResult.accent, color: 'white',
-                      boxShadow: `0 2px 12px ${triageResult.accent}40`,
-                    }}>
-                      {triageResult.action} <ArrowRight size={14} />
-                    </Link>
-                    <p style={{ fontSize: 11, color: '#9ca3af' }}>Sign up to save your triage history</p>
-                  </div>
-                </div>
-              )}
-
-              {!triageResult && !analyzing && selectedSymptoms.length === 0 && (
-                <p style={{ textAlign: 'center', fontSize: 13, color: '#9ca3af', marginTop: 20 }}>
-                  Select one or more symptoms above, then click Analyze
-                </p>
-              )}
-            </div>
-          </FadeIn>
-
-          <FadeIn delay={0.2}>
-            <p style={{ textAlign: 'center', fontSize: 12, color: '#6b7280', marginTop: 20 }}>
-              This is guidance only, not a medical diagnosis. Always consult a licensed clinician for medical decisions.
-            </p>
+            <TriageDemo />
           </FadeIn>
         </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } } @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }`}</style>
       </section>
 
-      {/* ── 6. FOR CLINICS ───────────────────────────────────────────────── */}
+      {/* ── 6. FOR CLINICS ──────────────────────────────────────────────────── */}
       <section id="for-clinics" style={{ background: '#080f1f', padding: '100px 0' }}>
         <div style={{ ...W, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 72, alignItems: 'center' }}>
-          {/* Left */}
           <FadeIn>
             <div>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 100, padding: '5px 14px', marginBottom: 24 }}>
@@ -723,7 +532,6 @@ export function LandingPage() {
               <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, marginBottom: 36 }}>
                 Give your clinic a modern operations hub. Manage appointments, track revenue, and grow your patient base — all from one dashboard.
               </p>
-              {/* Benefits */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 36 }}>
                 {[
                   { icon: TrendingUp, label: 'More Bookings', desc: 'Appear in patient searches. Fill empty slots automatically.' },
@@ -763,14 +571,113 @@ export function LandingPage() {
               </div>
             </div>
           </FadeIn>
-          {/* Right — dashboard mockup */}
           <FadeIn delay={0.15}>
             <DashboardMockup />
           </FadeIn>
         </div>
       </section>
 
-      {/* ── 7. TRACTION ──────────────────────────────────────────────────── */}
+      {/* ── 7. TESTIMONIALS ─────────────────────────────────────────────────── */}
+      <section id="testimonials" style={{ background: '#F8FAFC', padding: '100px 0' }}>
+        <div style={W}>
+          <FadeIn>
+            <div style={{ textAlign: 'center', marginBottom: 64 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 100, padding: '5px 14px', marginBottom: 20 }}>
+                <Star size={12} color="#D97706" fill="#D97706" />
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#92400E', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Trusted by Users</span>
+              </div>
+              <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 16 }}>
+                Real People. Real Impact.
+              </h2>
+              <p style={{ fontSize: 17, color: '#6b7280', maxWidth: 480, margin: '0 auto' }}>
+                From rural patients to Nairobi clinic admins — here's what early users are saying.
+              </p>
+            </div>
+          </FadeIn>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+            {[
+              {
+                quote: "I had a fever for two days and wasn't sure if I should go to hospital. MedAssist told me to see a doctor within 24 hours — turned out I had a UTI. Caught it early because of this app.",
+                name: 'Amina W.',
+                role: 'Patient · Westlands, Nairobi',
+                rating: 5,
+                initials: 'AW',
+                color: '#1E40AF',
+                bg: '#EFF6FF',
+              },
+              {
+                quote: "We onboarded to MedAssist in one afternoon. Within a week, we had 23 new bookings from patients we'd never seen before. The dashboard analytics alone are worth the subscription.",
+                name: 'Dr. James Mwangi',
+                role: 'Medical Director · Kisumu Medics',
+                rating: 5,
+                initials: 'JM',
+                color: '#059669',
+                bg: '#F0FDF4',
+              },
+              {
+                quote: "My mum is in Eldoret and I'm in Nairobi. I used MedAssist to book her an appointment at a verified clinic and pay with M-Pesa from here. That peace of mind is priceless.",
+                name: 'Brian K.',
+                role: 'Patient · CBD, Nairobi',
+                rating: 5,
+                initials: 'BK',
+                color: '#7C3AED',
+                bg: '#F5F3FF',
+              },
+            ].map(({ quote, name, role, rating, initials, color, bg }, i) => (
+              <FadeIn key={name} delay={i * 0.1}>
+                <div style={{
+                  background: 'white', borderRadius: 20, padding: '28px 24px',
+                  border: '1px solid #e5e7eb', boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
+                  display: 'flex', flexDirection: 'column', height: '100%',
+                }}>
+                  {/* Stars */}
+                  <div style={{ display: 'flex', gap: 3, marginBottom: 16 }}>
+                    {Array.from({ length: rating }).map((_, j) => (
+                      <Star key={j} size={14} color="#F59E0B" fill="#F59E0B" />
+                    ))}
+                  </div>
+                  {/* Quote mark */}
+                  <Quote size={24} color={color} style={{ opacity: 0.3, marginBottom: 12 }} />
+                  {/* Quote text */}
+                  <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.7, marginBottom: 24, flex: 1 }}>
+                    {quote}
+                  </p>
+                  {/* Author */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: '50%', background: bg, border: `2px solid ${color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ fontSize: 13, fontWeight: 800, color }}>{initials}</span>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{name}</p>
+                      <p style={{ fontSize: 11, color: '#9ca3af' }}>{role}</p>
+                    </div>
+                  </div>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+
+          {/* Trust row */}
+          <FadeIn delay={0.3}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 32, marginTop: 56, flexWrap: 'wrap' }}>
+              {[
+                { icon: Shield, label: 'HIPAA Aware', color: '#1E40AF' },
+                { icon: CheckCircle2, label: 'Verified Clinics', color: '#059669' },
+                { icon: Zap, label: 'M-Pesa Integrated', color: '#D97706' },
+                { icon: Users, label: '2,400+ Triage Sessions', color: '#7C3AED' },
+              ].map(({ icon: Icon, label, color }) => (
+                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Icon size={16} color={color} />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>{label}</span>
+                </div>
+              ))}
+            </div>
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* ── 8. TRACTION / METRICS ───────────────────────────────────────────── */}
       <section id="traction" style={{ background: '#1E40AF', padding: '100px 0', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px)', backgroundSize: '28px 28px', pointerEvents: 'none' }} />
         <div style={{ ...W, position: 'relative', zIndex: 1 }}>
@@ -792,8 +699,7 @@ export function LandingPage() {
               <FadeIn key={label} delay={i * 0.1}>
                 <div style={{ textAlign: 'center', padding: '0 16px' }}>
                   <div style={{ fontSize: 'clamp(32px, 4vw, 52px)', fontWeight: 900, color: 'white', letterSpacing: '-0.03em', lineHeight: 1, marginBottom: 10 }}>
-                    <CountUp target={target === 48 ? 48 : target} suffix={target === 48 ? '/5' : suffix} prefix={target === 1200000 ? 'KES ' : prefix} />
-                    {target === 48 && null}
+                    <CountUp target={target} suffix={suffix} prefix={prefix} />
                   </div>
                   <p style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.9)', marginBottom: 4 }}>{label}</p>
                   <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>{sub}</p>
@@ -810,8 +716,193 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── 8. TEAM ──────────────────────────────────────────────────────── */}
-      <section id="team" style={{ background: 'white', padding: '100px 0' }}>
+      {/* ── 9. PRICING ──────────────────────────────────────────────────────── */}
+      <section id="pricing" style={{ background: 'white', padding: '100px 0' }}>
+        <div style={W}>
+          <FadeIn>
+            <div style={{ textAlign: 'center', marginBottom: 48 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#DBEAFE', border: '1px solid #93C5FD', borderRadius: 100, padding: '5px 14px', marginBottom: 20 }}>
+                <Zap size={12} color="#1E40AF" />
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#1E40AF', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Pricing</span>
+              </div>
+              <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 16 }}>
+                Simple, Transparent Pricing
+              </h2>
+              <p style={{ fontSize: 17, color: '#6b7280', maxWidth: 480, margin: '0 auto 32px' }}>
+                Free for patients, affordable SaaS for clinics. No hidden fees.
+              </p>
+              {/* Billing toggle */}
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 0, background: '#F1F5F9', borderRadius: 12, padding: 4 }}>
+                <button
+                  onClick={() => setBillingAnnual(false)}
+                  style={{
+                    padding: '8px 20px', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: 'none',
+                    background: !billingAnnual ? 'white' : 'transparent',
+                    color: !billingAnnual ? '#0f172a' : '#9ca3af',
+                    boxShadow: !billingAnnual ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
+                    transition: 'all 0.2s',
+                  }}
+                >Monthly</button>
+                <button
+                  onClick={() => setBillingAnnual(true)}
+                  style={{
+                    padding: '8px 20px', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: 'none',
+                    background: billingAnnual ? 'white' : 'transparent',
+                    color: billingAnnual ? '#0f172a' : '#9ca3af',
+                    boxShadow: billingAnnual ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
+                    transition: 'all 0.2s',
+                    display: 'flex', alignItems: 'center', gap: 6,
+                  }}
+                >
+                  Annual
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#059669', background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 100, padding: '1px 7px' }}>Save 20%</span>
+                </button>
+              </div>
+            </div>
+          </FadeIn>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+            {/* Patient — Free */}
+            <FadeIn delay={0}>
+              <div style={{
+                background: 'white', borderRadius: 24, padding: '32px 28px',
+                border: '1px solid #e5e7eb', boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
+              }}>
+                <p style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 12 }}>Patient</p>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
+                  <span style={{ fontSize: 48, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.03em' }}>Free</span>
+                </div>
+                <p style={{ fontSize: 13, color: '#9ca3af', marginBottom: 28 }}>Always free for patients</p>
+                <Link to="/register" style={{
+                  display: 'block', textAlign: 'center', padding: '12px', borderRadius: 12, fontSize: 14, fontWeight: 700,
+                  background: '#F1F5F9', color: '#374151', textDecoration: 'none', marginBottom: 28,
+                  transition: 'all 0.2s',
+                }}>
+                  Get Started Free
+                </Link>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {[
+                    'AI Symptom Triage',
+                    'Find Clinics Near You',
+                    'Book Appointments',
+                    'Order OTC Medicines',
+                    'Triage History',
+                    'M-Pesa Payments',
+                  ].map(f => (
+                    <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <CheckCircle2 size={15} color="#059669" />
+                      <span style={{ fontSize: 13, color: '#374151' }}>{f}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </FadeIn>
+
+            {/* Pro Clinic — highlighted */}
+            <FadeIn delay={0.08}>
+              <div style={{
+                background: '#0f1e3d', borderRadius: 24, padding: '32px 28px',
+                border: '2px solid #1E40AF', boxShadow: '0 16px 48px rgba(30,64,175,0.3)',
+                position: 'relative',
+              }}>
+                <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: '#1E40AF', borderRadius: 100, padding: '4px 16px' }}>
+                  <span style={{ fontSize: 10, fontWeight: 800, color: 'white', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Most Popular</span>
+                </div>
+                <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 12 }}>Pro Clinic</p>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.5)' }}>KES</span>
+                  <span style={{ fontSize: 48, fontWeight: 900, color: 'white', letterSpacing: '-0.03em' }}>
+                    {billingAnnual ? pricing.pro.annual.toLocaleString() : pricing.pro.monthly.toLocaleString()}
+                  </span>
+                  <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>/month</span>
+                </div>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 28 }}>
+                  {billingAnnual ? 'Billed annually · 2 months free' : 'Billed monthly'}
+                </p>
+                <Link to="/register" style={{
+                  display: 'block', textAlign: 'center', padding: '12px', borderRadius: 12, fontSize: 14, fontWeight: 700,
+                  background: '#1E40AF', color: 'white', textDecoration: 'none', marginBottom: 28,
+                  boxShadow: '0 4px 16px rgba(30,64,175,0.5)', transition: 'all 0.2s',
+                }}>
+                  Start 14-Day Free Trial
+                </Link>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {[
+                    'Everything in Patient',
+                    'Clinic Dashboard',
+                    'Appointment Management',
+                    'Revenue Analytics',
+                    'Patient Records',
+                    'Doctor Profiles',
+                    'Unlimited Appointments',
+                    'M-Pesa Payouts',
+                    'Email Support',
+                  ].map(f => (
+                    <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <CheckCircle2 size={15} color="#60a5fa" />
+                      <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>{f}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </FadeIn>
+
+            {/* Enterprise */}
+            <FadeIn delay={0.16}>
+              <div style={{
+                background: 'white', borderRadius: 24, padding: '32px 28px',
+                border: '1px solid #e5e7eb', boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
+              }}>
+                <p style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 12 }}>Enterprise</p>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#9ca3af' }}>KES</span>
+                  <span style={{ fontSize: 48, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.03em' }}>
+                    {billingAnnual ? pricing.enterprise.annual.toLocaleString() : pricing.enterprise.monthly.toLocaleString()}
+                  </span>
+                  <span style={{ fontSize: 13, color: '#9ca3af' }}>/month</span>
+                </div>
+                <p style={{ fontSize: 13, color: '#9ca3af', marginBottom: 28 }}>
+                  {billingAnnual ? 'Billed annually · 2 months free' : 'Billed monthly'}
+                </p>
+                <Link to="/register" style={{
+                  display: 'block', textAlign: 'center', padding: '12px', borderRadius: 12, fontSize: 14, fontWeight: 700,
+                  background: 'white', color: '#1E40AF', textDecoration: 'none', marginBottom: 28,
+                  border: '2px solid #1E40AF', transition: 'all 0.2s',
+                }}>
+                  Contact Sales
+                </Link>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {[
+                    'Everything in Pro',
+                    'Multi-Branch Management',
+                    'Custom Branding',
+                    'API Access',
+                    'Priority Support',
+                    'Dedicated Account Manager',
+                    'Custom Integrations',
+                    'SLA Guarantee',
+                    'Compliance Reports',
+                  ].map(f => (
+                    <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <CheckCircle2 size={15} color="#059669" />
+                      <span style={{ fontSize: 13, color: '#374151' }}>{f}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </FadeIn>
+          </div>
+
+          <FadeIn delay={0.3}>
+            <p style={{ textAlign: 'center', fontSize: 13, color: '#9ca3af', marginTop: 32 }}>
+              All clinic plans include a 14-day free trial · No credit card required · Cancel any time
+            </p>
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* ── 10. TEAM ────────────────────────────────────────────────────────── */}
+      <section id="team" style={{ background: '#F8FAFC', padding: '100px 0' }}>
         <div style={W}>
           <FadeIn>
             <div style={{ textAlign: 'center', marginBottom: 64 }}>
@@ -844,8 +935,8 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── 9. INVESTORS / PARTNERS ──────────────────────────────────────── */}
-      <section id="investors" style={{ background: '#F8FAFC', padding: '80px 0' }}>
+      {/* ── 11. BACKED BY ───────────────────────────────────────────────────── */}
+      <section id="investors" style={{ background: 'white', padding: '80px 0' }}>
         <div style={W}>
           <FadeIn>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
@@ -879,7 +970,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── 10. FINAL CTA ─────────────────────────────────────────────────── */}
+      {/* ── 12. FINAL CTA ───────────────────────────────────────────────────── */}
       <section id="cta" style={{ background: 'linear-gradient(135deg, #080f20 0%, #0f1e3d 50%, #132c5e 100%)', padding: '120px 0', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%, -50%)', width: 600, height: 400, background: 'radial-gradient(circle, rgba(30,64,175,0.3) 0%, transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none' }} />
         <div style={{ ...W, textAlign: 'center', position: 'relative', zIndex: 1 }}>
@@ -930,11 +1021,10 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── 11. FOOTER ────────────────────────────────────────────────────── */}
+      {/* ── 13. FOOTER ──────────────────────────────────────────────────────── */}
       <footer style={{ background: '#0d1f10', padding: '56px 0 36px', fontFamily: INTER }}>
         <div style={W}>
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 48, marginBottom: 48 }}>
-            {/* Brand */}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
                 <div style={{ width: 32, height: 32, background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -947,21 +1037,18 @@ export function LandingPage() {
               </p>
               <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 20 }}>Nairobi, Kenya · 2026</p>
             </div>
-            {/* Product */}
             <div>
               <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 16 }}>Product</p>
               {['Symptom Triage', 'Clinic Finder', 'Book Appointment', 'Medicine Orders'].map(l => (
-                <Link key={l} to="/register" style={{ display: 'block', fontSize: 13, color: 'rgba(255,255,255,0.5)', textDecoration: 'none', marginBottom: 10, transition: 'color 0.2s' }}>{l}</Link>
+                <Link key={l} to="/register" style={{ display: 'block', fontSize: 13, color: 'rgba(255,255,255,0.5)', textDecoration: 'none', marginBottom: 10 }}>{l}</Link>
               ))}
             </div>
-            {/* For Clinics */}
             <div>
               <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 16 }}>For Clinics</p>
               {['Get Listed', 'Dashboard', 'Pricing', 'API Access'].map(l => (
                 <Link key={l} to="/register" style={{ display: 'block', fontSize: 13, color: 'rgba(255,255,255,0.5)', textDecoration: 'none', marginBottom: 10 }}>{l}</Link>
               ))}
             </div>
-            {/* Company */}
             <div>
               <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 16 }}>Company</p>
               {['About', 'Blog', 'Careers', 'Contact'].map(l => (
@@ -969,7 +1056,6 @@ export function LandingPage() {
               ))}
             </div>
           </div>
-          {/* Bottom bar */}
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
             <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>© 2026 MedAssist AI · Nairobi, Kenya · All rights reserved</p>
             <div style={{ display: 'flex', gap: 20 }}>

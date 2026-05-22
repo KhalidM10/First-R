@@ -18,9 +18,17 @@ import { ClinicAppointmentsPage }     from './pages/clinic/ClinicAppointmentsPag
 import { ClinicAnalyticsPage }        from './pages/clinic/ClinicAnalyticsPage'
 import { ClinicSubscriptionPage }     from './pages/clinic/ClinicSubscriptionPage'
 import { ClinicAuditPage }           from './pages/clinic/ClinicAuditPage'
+import { ClinicDoctorsPage }         from './pages/clinic/ClinicDoctorsPage'
+import { ClinicPatientsPage }        from './pages/clinic/ClinicPatientsPage'
+import { ClinicOrdersPage }          from './pages/clinic/ClinicOrdersPage'
+import { ClinicProductsPage }        from './pages/clinic/ClinicProductsPage'
+import { ClinicReviewsPage }         from './pages/clinic/ClinicReviewsPage'
+import { ClinicSettingsPage }        from './pages/clinic/ClinicSettingsPage'
 import { ClinicLoginPage }           from './pages/ClinicLoginPage'
 import { ForgotPasswordPage }        from './pages/ForgotPasswordPage'
 import { SessionsPage }              from './pages/SessionsPage'
+import { HealthProfilePage }         from './pages/HealthProfilePage'
+import { NotificationsPage }         from './pages/NotificationsPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
@@ -53,17 +61,6 @@ function PatientOrClinicRedirect() {
   return <DashboardPage />
 }
 
-function ProfilePlaceholder() {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="h-14 w-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
-        <span className="text-2xl text-gray-400">P</span>
-      </div>
-      <h1 className="text-lg font-bold text-gray-900">Patient Profile</h1>
-      <p className="text-sm text-gray-400 mt-1">Profile editing — coming soon</p>
-    </div>
-  )
-}
 
 export default function App() {
   return (
@@ -82,9 +79,15 @@ export default function App() {
       >
         <Route index                element={<ClinicOverviewPage />} />
         <Route path="appointments"  element={<ClinicAppointmentsPage />} />
+        <Route path="patients"      element={<ClinicPatientsPage />} />
+        <Route path="doctors"       element={<ClinicDoctorsPage />} />
+        <Route path="orders"        element={<ClinicOrdersPage />} />
+        <Route path="products"      element={<ClinicProductsPage />} />
         <Route path="analytics"     element={<ClinicAnalyticsPage />} />
-        <Route path="subscription"  element={<ClinicSubscriptionPage />} />
+        <Route path="reviews"       element={<ClinicReviewsPage />} />
         <Route path="audit"         element={<ClinicAuditPage />} />
+        <Route path="subscription"  element={<ClinicSubscriptionPage />} />
+        <Route path="settings"      element={<ClinicSettingsPage />} />
       </Route>
 
       {/* Protected patient app shell */}
@@ -102,7 +105,8 @@ export default function App() {
                 <Route path="/appointments"     element={<AppointmentsPage />} />
                 <Route path="/appointments/new" element={<Navigate to="/clinics" replace />} />
                 <Route path="/medicines"        element={<MedicineOrderPage />} />
-                <Route path="/profile"          element={<ProfilePlaceholder />} />
+                <Route path="/profile"          element={<HealthProfilePage />} />
+                <Route path="/notifications"   element={<NotificationsPage />} />
                 <Route path="/sessions"         element={<SessionsPage />} />
                 <Route path="*"                 element={<Navigate to="/dashboard" replace />} />
               </Routes>

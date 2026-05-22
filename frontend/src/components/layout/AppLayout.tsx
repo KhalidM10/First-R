@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Activity, Building2, Calendar, LayoutDashboard, LogOut, Pill, User, BarChart2 } from 'lucide-react'
+import { Activity, BarChart2, Bell, Building2, Calendar, LayoutDashboard, LogOut, Pill, User } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useAuthStore } from '../../store/auth'
 import { usePermissions } from '../../contexts/PermissionContext'
@@ -23,8 +23,9 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { href: '/triage',       label: 'Check Symptoms', icon: Activity,     excludeRoles: [...CLINIC_ROLES] },
   { href: '/clinics',      label: 'Find Clinics',   icon: Building2,    excludeRoles: [...CLINIC_ROLES] },
   { href: '/appointments', label: 'Appointments',   icon: Calendar,     permission: ['appointments', 'read:own'] },
-  { href: '/medicines',    label: 'Medicines',      icon: Pill,         permission: ['orders', 'create'] },
-  { href: '/profile',      label: 'Profile',        icon: User },
+  { href: '/medicines',      label: 'Medicines',      icon: Pill,         permission: ['orders', 'create'] },
+  { href: '/notifications',  label: 'Notifications',  icon: Bell,         excludeRoles: [...CLINIC_ROLES] },
+  { href: '/profile',        label: 'Profile',        icon: User },
 ]
 
 function EcgMark() {

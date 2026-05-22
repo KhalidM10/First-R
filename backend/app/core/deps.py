@@ -35,7 +35,6 @@ def get_current_user(
     if not user:
         raise exc
 
-    # Block locked accounts
     if user.locked_until and user.locked_until > datetime.utcnow().replace(tzinfo=user.locked_until.tzinfo):
         raise HTTPException(
             status_code=status.HTTP_423_LOCKED,
@@ -70,4 +69,43 @@ def require_role(*roles: str):
                 detail=f"Role '{current_user.role}' is not authorised for this action",
             )
         return current_user
+    return checker
+
+
+def require_permission(permission_name: str):
+    """
+    Dependency factory: checks that the current user holds the named permission.
+
+    Usage:
+        @router.get("/appointments")
+        def list_appointments(
+            user = Depends(require_permission("appointments:read"))
+        ):
+
+    Logs a blocked audit event before raising 403.
+    """
+    def checker(
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db),
+    ) -> User:
+        from app.services.permissions import has_permission
+        from app.core.audit import log_event
+
+        if not has_permission(db, current_user, permission_name):
+            log_event(
+                db,
+                action=permission_name,
+                resource_type=permission_name.split(":")[0],
+                status="blocked",
+                user=current_user,
+                failure_reason="insufficient_permissions",
+                risk_score=30,
+            )
+            db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Permission '{permission_name}' required",
+            )
+        return current_user
+
     return checker

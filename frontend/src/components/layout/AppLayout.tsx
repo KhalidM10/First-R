@@ -3,14 +3,28 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Activity, Building2, Calendar, LayoutDashboard, LogOut, Pill, User, BarChart2 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useAuthStore } from '../../store/auth'
+import { usePermissions } from '../../contexts/PermissionContext'
+import { CLINIC_ROLES } from '../../types'
 
-const nav = [
-  { href: '/dashboard',    label: 'Dashboard',    icon: LayoutDashboard },
-  { href: '/triage',       label: 'Check Symptoms', icon: Activity },
-  { href: '/clinics',      label: 'Find Clinics',  icon: Building2 },
-  { href: '/appointments', label: 'Appointments',  icon: Calendar },
-  { href: '/medicines',    label: 'Medicines',     icon: Pill },
-  { href: '/profile',      label: 'Profile',       icon: User },
+interface NavItem {
+  href: string
+  label: string
+  icon: React.ElementType
+  /** If set, only render when can(resource, action) is true */
+  permission?: [string, string]
+  /** If set, only render for these roles */
+  roles?: string[]
+  /** If set, never render for these roles */
+  excludeRoles?: string[]
+}
+
+const ALL_NAV_ITEMS: NavItem[] = [
+  { href: '/dashboard',    label: 'Dashboard',      icon: LayoutDashboard },
+  { href: '/triage',       label: 'Check Symptoms', icon: Activity,     excludeRoles: [...CLINIC_ROLES] },
+  { href: '/clinics',      label: 'Find Clinics',   icon: Building2,    excludeRoles: [...CLINIC_ROLES] },
+  { href: '/appointments', label: 'Appointments',   icon: Calendar,     permission: ['appointments', 'read:own'] },
+  { href: '/medicines',    label: 'Medicines',      icon: Pill,         permission: ['orders', 'create'] },
+  { href: '/profile',      label: 'Profile',        icon: User },
 ]
 
 function EcgMark() {
@@ -38,6 +52,7 @@ function Avatar({ name }: { name?: string }) {
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuthStore()
+  const { can } = usePermissions()
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
@@ -46,6 +61,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     logout()
     navigate('/login')
   }
+
+  const visibleNav = ALL_NAV_ITEMS.filter((item) => {
+    if (item.roles && user && !item.roles.includes(user.role)) return false
+    if (item.excludeRoles && user && item.excludeRoles.includes(user.role)) return false
+    if (item.permission && !can(item.permission[0], item.permission[1])) return false
+    return true
+  })
+
+  const isClinicStaff = user ? CLINIC_ROLES.includes(user.role) : false
 
   return (
     <div className="flex h-screen" style={{ backgroundColor: '#f4f3ef' }}>
@@ -78,7 +102,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* Nav */}
         <nav className="flex-1 px-2 pt-3 pb-2 space-y-[2px]">
-          {nav.map(({ href, label, icon: Icon }) => {
+          {visibleNav.map(({ href, label, icon: Icon }) => {
             const active =
               pathname.startsWith(href) ||
               (href === '/clinics' && pathname.startsWith('/book'))
@@ -110,8 +134,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             )
           })}
 
-          {/* Clinic portal — clinic_admin / super_admin only */}
-          {(user?.role === 'clinic_admin' || user?.role === 'super_admin') && (
+          {/* Clinic portal link — clinic staff only */}
+          {isClinicStaff && (
             <>
               {!collapsed && (
                 <p className="px-3 pt-4 pb-1 text-[10px] font-bold uppercase tracking-widest text-white/20">
@@ -137,7 +161,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 />
                 {!collapsed && (
                   <>
-                    <span className="flex-1">Clinic Dashboard</span>
+                    <span className="flex-1">Clinic Portal</span>
                     {pathname.startsWith('/clinic-dashboard') && (
                       <span className="h-[6px] w-[6px] rounded-full bg-green-400" />
                     )}
@@ -178,7 +202,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* ── Main content ──────────────────────────────────────── */}
       <main className="flex-1 overflow-y-auto relative">
-        {/* Subtle dot grid texture */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{

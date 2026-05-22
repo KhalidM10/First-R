@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from './components/layout/AppLayout'
 import { ClinicLayout } from './components/clinic/ClinicLayout'
 import { useAuthStore } from './store/auth'
+import { CLINIC_ROLES } from './types'
 import { LandingPage }                from './pages/LandingPage'
 import { DashboardPage }              from './pages/DashboardPage'
 import { LoginPage }                  from './pages/LoginPage'
@@ -25,7 +26,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function GuestRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuthStore()
   if (!isAuthenticated) return <>{children}</>
-  if (user?.role === 'clinic_admin' || user?.role === 'super_admin') {
+  if (user && CLINIC_ROLES.includes(user.role)) {
     return <Navigate to="/clinic-dashboard" replace />
   }
   return <Navigate to="/dashboard" replace />
@@ -34,7 +35,7 @@ function GuestRoute({ children }: { children: React.ReactNode }) {
 function ClinicRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuthStore()
   if (!isAuthenticated) return <Navigate to="/login" replace />
-  if (user?.role !== 'clinic_admin' && user?.role !== 'super_admin') {
+  if (!user || !CLINIC_ROLES.includes(user.role)) {
     return <Navigate to="/dashboard" replace />
   }
   return <>{children}</>
@@ -42,7 +43,7 @@ function ClinicRoute({ children }: { children: React.ReactNode }) {
 
 function PatientOrClinicRedirect() {
   const { user } = useAuthStore()
-  if (user?.role === 'clinic_admin' || user?.role === 'super_admin') {
+  if (user && CLINIC_ROLES.includes(user.role)) {
     return <Navigate to="/clinic-dashboard" replace />
   }
   return <DashboardPage />
@@ -68,7 +69,7 @@ export default function App() {
       <Route path="/login"    element={<GuestRoute><LoginPage /></GuestRoute>} />
       <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
 
-      {/* Clinic portal — own layout, before catch-all */}
+      {/* Clinic portal — all clinic staff roles */}
       <Route
         path="/clinic-dashboard"
         element={<ClinicRoute><ClinicLayout /></ClinicRoute>}
@@ -79,7 +80,7 @@ export default function App() {
         <Route path="subscription"  element={<ClinicSubscriptionPage />} />
       </Route>
 
-      {/* Protected app shell */}
+      {/* Protected patient app shell */}
       <Route
         path="/*"
         element={

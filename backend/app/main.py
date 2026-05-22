@@ -4,16 +4,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.database import engine, Base
-from app.api.routes import auth, triage, appointments, clinics, patients, orders, dashboard
+from app.api.routes import auth, triage, appointments, clinics, patients, orders, dashboard, permissions
 
 settings = get_settings()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engine)
-    yield
+    yield  # Schema is managed by Alembic migrations
 
 
 app = FastAPI(
@@ -41,6 +39,7 @@ app.include_router(clinics.router,      prefix="/api/v1/clinics",       tags=["c
 app.include_router(patients.router,     prefix="/api/v1/patients",      tags=["patients"])
 app.include_router(orders.router,       prefix="/api/v1/orders",        tags=["orders"])
 app.include_router(dashboard.router,    prefix="/api/v1/dashboard",     tags=["dashboard"])
+app.include_router(permissions.router,  prefix="/api/v1/permissions",   tags=["permissions"])
 
 
 @app.get("/", tags=["health"])

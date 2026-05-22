@@ -2,16 +2,60 @@ import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Calendar, BarChart2, CreditCard,
-  ArrowLeft, LogOut,
+  ArrowLeft, LogOut, Users, Package,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useAuthStore } from '../../store/auth'
+import { usePermissions } from '../../contexts/PermissionContext'
 
-const clinicNav = [
-  { href: '/clinic-dashboard',              label: 'Overview',      icon: LayoutDashboard, end: true },
-  { href: '/clinic-dashboard/appointments', label: 'Appointments',  icon: Calendar,        end: false },
-  { href: '/clinic-dashboard/analytics',    label: 'Analytics',     icon: BarChart2,       end: false },
-  { href: '/clinic-dashboard/subscription', label: 'Subscription',  icon: CreditCard,      end: false },
+interface ClinicNavItem {
+  href: string
+  label: string
+  icon: React.ElementType
+  end?: boolean
+  /** Only show when user holds this permission */
+  permission?: [string, string]
+  /** Only show for these roles */
+  roles?: string[]
+}
+
+const CLINIC_NAV: ClinicNavItem[] = [
+  {
+    href: '/clinic-dashboard',
+    label: 'Overview',
+    icon: LayoutDashboard,
+    end: true,
+  },
+  {
+    href: '/clinic-dashboard/appointments',
+    label: 'Appointments',
+    icon: Calendar,
+    permission: ['appointments', 'read'],
+  },
+  {
+    href: '/clinic-dashboard/analytics',
+    label: 'Analytics',
+    icon: BarChart2,
+    permission: ['analytics', 'read:basic'],
+  },
+  {
+    href: '/clinic-dashboard/patients',
+    label: 'Patients',
+    icon: Users,
+    permission: ['patients', 'read'],
+  },
+  {
+    href: '/clinic-dashboard/orders',
+    label: 'Orders',
+    icon: Package,
+    permission: ['orders', 'read:clinic'],
+  },
+  {
+    href: '/clinic-dashboard/subscription',
+    label: 'Subscription',
+    icon: CreditCard,
+    roles: ['clinic_admin', 'super_admin'],
+  },
 ]
 
 function EcgMark() {
@@ -36,6 +80,7 @@ function Avatar({ name }: { name?: string }) {
 
 export function ClinicLayout() {
   const { user, logout } = useAuthStore()
+  const { can } = usePermissions()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
 
@@ -43,6 +88,12 @@ export function ClinicLayout() {
     logout()
     navigate('/login')
   }
+
+  const visibleNav = CLINIC_NAV.filter((item) => {
+    if (item.roles && user && !item.roles.includes(user.role)) return false
+    if (item.permission && !can(item.permission[0], item.permission[1])) return false
+    return true
+  })
 
   return (
     <div className="flex h-screen" style={{ backgroundColor: '#f4f3ef' }}>
@@ -73,9 +124,18 @@ export function ClinicLayout() {
           )}
         </button>
 
+        {/* Role badge */}
+        {!collapsed && user && (
+          <div className="mx-3 mb-1 mt-0">
+            <span className="inline-block rounded-full bg-green-500/10 px-2 py-0.5 text-[10px] font-semibold text-green-400 capitalize">
+              {user.role.replace(/_/g, ' ')}
+            </span>
+          </div>
+        )}
+
         {/* Nav */}
-        <nav className="flex-1 px-2 pt-3 pb-2 space-y-[2px]">
-          {clinicNav.map(({ href, label, icon: Icon, end }) => (
+        <nav className="flex-1 px-2 pt-2 pb-2 space-y-[2px]">
+          {visibleNav.map(({ href, label, icon: Icon, end }) => (
             <NavLink
               key={href}
               to={href}
@@ -126,7 +186,9 @@ export function ClinicLayout() {
               <Avatar name={user?.full_name} />
               <div className="flex-1 min-w-0">
                 <p className="text-white/80 text-[11px] font-semibold truncate">{user?.full_name}</p>
-                <p className="text-white/30 text-[11px] mt-[1px]">Clinic Admin</p>
+                <p className="text-white/30 text-[11px] capitalize mt-[1px]">
+                  {user?.role?.replace(/_/g, ' ')}
+                </p>
               </div>
             </div>
           )}

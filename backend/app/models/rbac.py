@@ -23,12 +23,16 @@ class Permission(Base):
     resource: Mapped[str] = mapped_column(String(100), nullable=False)
     action: Mapped[str] = mapped_column(
         String(50),
-        CheckConstraint("action IN ('create','read','update','delete','export','import','approve','reject')"),
+        CheckConstraint(
+            "action IN ('create','read','update','delete','export','import',"
+            "'approve','reject','cancel','manage','invite')",
+            name="permissions_action_check",
+        ),
         nullable=False,
     )
     scope: Mapped[str] = mapped_column(
         String(50),
-        CheckConstraint("scope IN ('own','clinic','all')"),
+        CheckConstraint("scope IN ('own','clinic','all')", name="permissions_scope_check"),
         nullable=False,
     )
     description: Mapped[Optional[str]] = mapped_column(Text)

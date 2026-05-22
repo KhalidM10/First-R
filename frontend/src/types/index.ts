@@ -1,13 +1,30 @@
-export type UserRole = 'patient' | 'clinic_admin' | 'super_admin'
+export type UserRole =
+  | 'patient'
+  | 'clinic_admin'
+  | 'clinic_doctor'
+  | 'clinic_receptionist'
+  | 'clinic_pharmacist'
+  | 'super_admin'
+
+export const CLINIC_ROLES: UserRole[] = [
+  'clinic_admin',
+  'clinic_doctor',
+  'clinic_receptionist',
+  'clinic_pharmacist',
+  'super_admin',
+]
 
 export interface User {
   id: string
   full_name: string
   email: string
-  phone: string | null
+  phone: string
   role: UserRole
-  location: string | null
+  clinic_id: string | null
+  county: string | null
   is_active: boolean
+  is_email_verified: boolean
+  avatar_url: string | null
   created_at: string
 }
 
@@ -16,6 +33,7 @@ export interface TokenResponse {
   refresh_token: string
   token_type: string
   user: User
+  permissions: string[]
 }
 
 export interface Patient {

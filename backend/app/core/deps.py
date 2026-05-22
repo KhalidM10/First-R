@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from fastapi import Depends, HTTPException, status
@@ -5,20 +6,12 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
 from sqlalchemy.orm import Session
 
-from app.database import SessionLocal
+from app.database import get_db
 from app.core.security import decode_token
-from app.models.user import User, UserRole
+from app.models.user import User
 
 bearer = HTTPBearer()
 bearer_optional = HTTPBearer(auto_error=False)
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 def get_current_user(
@@ -41,6 +34,14 @@ def get_current_user(
     user = db.query(User).filter(User.id == user_id, User.is_active == True).first()
     if not user:
         raise exc
+
+    # Block locked accounts
+    if user.locked_until and user.locked_until > datetime.utcnow().replace(tzinfo=user.locked_until.tzinfo):
+        raise HTTPException(
+            status_code=status.HTTP_423_LOCKED,
+            detail="Account temporarily locked due to failed login attempts",
+        )
+
     return user
 
 
@@ -60,13 +61,13 @@ def get_optional_user(
         return None
 
 
-def require_role(*roles: UserRole):
+def require_role(*roles: str):
+    """Dependency factory: ensures current user has one of the given roles."""
     def checker(current_user: User = Depends(get_current_user)) -> User:
         if current_user.role not in roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Insufficient permissions",
+                detail=f"Role '{current_user.role}' is not authorised for this action",
             )
         return current_user
-
     return checker

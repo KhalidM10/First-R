@@ -1,11 +1,19 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
+from decimal import Decimal
+from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import (
+    Boolean, Date, DateTime, ForeignKey,
+    Index, Integer, Numeric, String, Text, func,
+)
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.models.clinic import Clinic
 
 
 class Product(Base):
@@ -17,17 +25,33 @@ class Product(Base):
         Index("ix_products_name", "name"),
     )
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    clinic_id = Column(UUID(as_uuid=True), ForeignKey("clinics.id"), nullable=False)
-    name = Column(String(255), nullable=False)
-    category = Column(String(50), nullable=False, default="general")
-    description = Column(Text, nullable=True)
-    price_kes = Column(Float, nullable=False)
-    stock_quantity = Column(Integer, default=100)
-    requires_prescription = Column(Boolean, default=False, nullable=False)
-    image_url = Column(String(500), nullable=True)
-    is_active = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    clinic_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("clinics.id", ondelete="CASCADE"), nullable=False)
 
-    clinic = relationship("Clinic", back_populates="products")
-    order_items = relationship("OrderItem", back_populates="product")
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    generic_name: Mapped[Optional[str]] = mapped_column(String(255))
+    brand: Mapped[Optional[str]] = mapped_column(String(100))
+    category: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    dosage_info: Mapped[Optional[str]] = mapped_column(Text)
+    side_effects: Mapped[Optional[str]] = mapped_column(Text)
+    contraindications: Mapped[Optional[str]] = mapped_column(Text)
+
+    price_kes: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
+    stock_quantity: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    low_stock_threshold: Mapped[int] = mapped_column(Integer, default=10, nullable=False)
+    requires_prescription: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    image_url: Mapped[Optional[str]] = mapped_column(Text)
+    barcode: Mapped[Optional[str]] = mapped_column(String(100))
+    expiry_date: Mapped[Optional[date]] = mapped_column(Date)
+    manufacturer: Mapped[Optional[str]] = mapped_column(String(255))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    clinic: Mapped["Clinic"] = relationship("Clinic", back_populates="products")
+
+    def __repr__(self) -> str:
+        return f"<Product id={self.id} name={self.name!r} price={self.price_kes}>"

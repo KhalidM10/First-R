@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
@@ -314,12 +314,14 @@ def dashboard_appointments(
 
 
 @router.patch("/appointments/{appointment_id}/status")
-def update_appointment_status(
+async def update_appointment_status(
     appointment_id: str,
     new_status: str = Query(..., alias="status"),
+    background_tasks: BackgroundTasks = None,
     current_user: User = Depends(require_role(UserRole.CLINIC_ADMIN, UserRole.SUPER_ADMIN)),
     db: Session = Depends(get_db),
 ):
+    from fastapi import BackgroundTasks as BT
     clinic = _get_clinic(current_user, db)
     appt = db.query(Appointment).filter(
         Appointment.id == appointment_id,
@@ -332,7 +334,72 @@ def update_appointment_status(
     except ValueError:
         raise HTTPException(status_code=400, detail=f"Invalid status: {new_status}")
     db.commit()
+
+    # Notify patient of status change
+    patient_id = str(appt.patient_id)
+    clinic_name = clinic.name
+    appt_date = str(appt.appointment_date)
+    appt_time = str(appt.appointment_time)[:5]
+
+    import asyncio
+    asyncio.ensure_future(_notify_appt_status_change(
+        patient_id=patient_id,
+        appointment_id=appointment_id,
+        new_status=new_status,
+        clinic_name=clinic_name,
+        appt_date=appt_date,
+        appt_time=appt_time,
+    ))
+
     return {"id": str(appt.id), "status": appt.status}
+
+
+async def _notify_appt_status_change(
+    patient_id: str, appointment_id: str, new_status: str,
+    clinic_name: str, appt_date: str, appt_time: str,
+) -> None:
+    from app.database import SessionLocal
+    from app.models.user import User as UserModel
+    from app.services.notification_service import notify
+    from app.services.sms import (
+        sms_appointment_confirmed, sms_appointment_cancelled,
+    )
+
+    STATUS_TITLES = {
+        "confirmed":   ("Appointment Confirmed", "confirmed"),
+        "cancelled":   ("Appointment Cancelled", "cancelled"),
+        "completed":   ("Appointment Completed", "completed"),
+        "in_progress": ("Appointment In Progress", None),
+    }
+    info = STATUS_TITLES.get(new_status)
+    if not info:
+        return
+
+    db = SessionLocal()
+    try:
+        patient = db.query(UserModel).filter(UserModel.id == patient_id).first()
+        if not patient:
+            return
+
+        title, _ = info
+        body = (
+            f"Your appointment at {clinic_name} on {appt_date} at {appt_time} is now {new_status}."
+        )
+        channels = ["in_app"]
+        if patient.phone and new_status in ("confirmed", "cancelled"):
+            channels.append("sms")
+
+        await notify(
+            db, patient,
+            type=f"appointment_{new_status}",
+            title=title,
+            body=body,
+            data={"appointment_id": appointment_id, "new_status": new_status},
+            channels=channels,
+        )
+        db.commit()
+    finally:
+        db.close()
 
 
 # ── Doctors list ──────────────────────────────────────────────────────────────

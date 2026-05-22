@@ -4,6 +4,7 @@ import { Activity, BarChart2, Bell, Building2, Calendar, LayoutDashboard, LogOut
 import { cn } from '../../lib/utils'
 import { useAuthStore } from '../../store/auth'
 import { usePermissions } from '../../contexts/PermissionContext'
+import { useWs } from '../../contexts/WebSocketContext'
 import { CLINIC_ROLES } from '../../types'
 
 interface NavItem {
@@ -54,6 +55,7 @@ function Avatar({ name }: { name?: string }) {
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuthStore()
   const { can } = usePermissions()
+  const { unreadCount } = useWs()
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
@@ -113,7 +115,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 to={href}
                 title={collapsed ? label : undefined}
                 className={cn(
-                  'flex items-center gap-3 rounded-xl px-3 py-[9px] text-[13px] font-medium transition-all duration-150 group',
+                  'relative flex items-center gap-3 rounded-xl px-3 py-[9px] text-[13px] font-medium transition-all duration-150 group',
                   active
                     ? 'bg-white/10 text-white'
                     : 'text-white/40 hover:bg-white/5 hover:text-white/70',
@@ -128,8 +130,18 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 {!collapsed && (
                   <>
                     <span className="flex-1">{label}</span>
-                    {active && <span className="h-[6px] w-[6px] rounded-full bg-green-400" />}
+                    {href === '/notifications' && unreadCount > 0 && (
+                      <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-extrabold text-white">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
+                    {active && href !== '/notifications' && (
+                      <span className="h-[6px] w-[6px] rounded-full bg-green-400" />
+                    )}
                   </>
+                )}
+                {collapsed && href === '/notifications' && unreadCount > 0 && (
+                  <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
                 )}
               </Link>
             )

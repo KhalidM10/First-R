@@ -140,6 +140,17 @@ async def register(data: RegisterRequest, request: Request, response: Response, 
 
     _set_auth_cookies(response, access, refresh, csrf)
     invalidate_cache(str(user.id))
+
+    # Welcome email (async, non-blocking)
+    try:
+        from app.tasks.email_tasks import send_email_task
+        from app.services.email import email_welcome
+        verify_url = "https://medassist.co.ke/verify-email"
+        subject, html = email_welcome(user.full_name, verify_url)
+        send_email_task.delay(user.email, user.full_name, subject, html)
+    except Exception:
+        pass  # Never fail registration due to email issues
+
     return {**_build_response(db, user), "access_token": access, "refresh_token": refresh, "token_type": "bearer"}
 
 
@@ -215,6 +226,21 @@ async def login(data: LoginRequest, request: Request, response: Response, db: Se
 
     _set_auth_cookies(response, access, refresh, csrf)
     invalidate_cache(str(user.id))
+
+    # Login alert SMS for new/unknown IPs
+    try:
+        if failed_before == 0:  # only on clean logins, not retries
+            from app.tasks.sms_tasks import send_sms_task
+            from app.services.sms import sms_login_alert
+            import user_agents as ua_parser
+            ua_str = request.headers.get("user-agent", "")
+            city = "Unknown city"
+            country = "Kenya"
+            msg = sms_login_alert(user.full_name, city, country)
+            send_sms_task.delay(user.phone, msg)
+    except Exception:
+        pass  # Never fail login due to SMS issues
+
     return {**_build_response(db, user), "access_token": access, "refresh_token": refresh, "token_type": "bearer"}
 
 

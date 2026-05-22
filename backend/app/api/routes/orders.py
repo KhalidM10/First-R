@@ -124,7 +124,7 @@ def create_order(
 
 
 @router.patch("/{order_id}/status", response_model=OrderResponse)
-def update_order_status(
+async def update_order_status(
     order_id: str,
     status: OrderStatus = Query(...),
     current_user: User = Depends(get_current_user),
@@ -133,6 +133,75 @@ def update_order_status(
     if current_user.role not in [UserRole.CLINIC_ADMIN, UserRole.SUPER_ADMIN]:
         raise HTTPException(status_code=403, detail="Not authorized")
     order = _fetch_order(order_id, db)
+    old_status = order.status
     order.status = str(status)
     db.commit()
+
+    # Notify patient of order status change
+    import asyncio
+    asyncio.ensure_future(_notify_order_status(
+        order_id=order_id,
+        patient_id=str(order.patient_id),
+        new_status=str(status),
+        order_number=order.order_number,
+    ))
+
     return OrderResponse.model_validate(_fetch_order(order_id, db))
+
+
+async def _notify_order_status(
+    order_id: str, patient_id: str, new_status: str, order_number: str,
+) -> None:
+    from app.database import SessionLocal
+    from app.models.user import User as UserModel
+    from app.models.clinic import Clinic
+    from app.models.order import Order
+    from app.services.notification_service import notify
+    from app.services.sms import sms_order_ready, sms_order_delivered
+
+    STATUS_TITLES = {
+        "processing":       "Order Processing",
+        "ready":            "Order Ready for Pickup",
+        "out_for_delivery": "Order Out for Delivery",
+        "delivered":        "Order Delivered",
+        "cancelled":        "Order Cancelled",
+    }
+    title = STATUS_TITLES.get(new_status)
+    if not title:
+        return
+
+    db = SessionLocal()
+    try:
+        patient = db.query(UserModel).filter(UserModel.id == patient_id).first()
+        order = db.query(Order).filter(Order.id == order_id).first()
+        if not patient or not order:
+            return
+
+        clinic = db.query(Clinic).filter(Clinic.id == order.clinic_id).first()
+        clinic_name = clinic.name if clinic else "the clinic"
+        clinic_addr = clinic.address if clinic else ""
+
+        if new_status == "ready":
+            sms_body = sms_order_ready(
+                patient.full_name, order_number, clinic_name, clinic_addr, "48 hours"
+            )
+        elif new_status == "delivered":
+            sms_body = sms_order_delivered(patient.full_name, order_number, order_id)
+        else:
+            sms_body = f"MedAssist AI: Your order #{order_number} status: {new_status}."
+
+        channels = ["in_app"]
+        if patient.phone and new_status in ("ready", "delivered", "cancelled"):
+            channels.append("sms")
+
+        await notify(
+            db, patient,
+            type=f"order_{new_status}",
+            title=title,
+            body=sms_body,
+            data={"order_id": order_id, "order_number": order_number, "status": new_status},
+            channels=channels,
+        )
+        db.commit()
+    finally:
+        db.close()

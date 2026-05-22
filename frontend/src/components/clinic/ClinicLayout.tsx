@@ -10,6 +10,7 @@ import {
 import { cn } from '../../lib/utils'
 import { useAuthStore } from '../../store/auth'
 import { usePermissions } from '../../contexts/PermissionContext'
+import { useWs } from '../../contexts/WebSocketContext'
 import { api } from '../../lib/api'
 
 interface ClinicNavItem {
@@ -67,6 +68,7 @@ function Avatar({ name, size = 28 }: { name?: string; size?: number }) {
 export function ClinicLayout() {
   const { user, logout } = useAuthStore()
   const { can } = usePermissions()
+  const { unreadCount } = useWs()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
 
@@ -224,8 +226,28 @@ export function ClinicLayout() {
       </aside>
 
       {/* ── Main ─────────────────────────────────────────────── */}
-      <main className="flex-1 overflow-y-auto">
-        <Outlet />
+      <main className="flex-1 overflow-y-auto flex flex-col">
+        {/* Top bar */}
+        <div
+          className="shrink-0 flex items-center justify-end gap-3 px-6 py-3"
+          style={{ borderBottom: '1px solid rgba(0,0,0,0.06)', backgroundColor: '#F8FAFC' }}
+        >
+          <Link
+            to="/notifications"
+            className="relative flex h-9 w-9 items-center justify-center rounded-xl transition-colors hover:bg-gray-200"
+            title="Notifications"
+          >
+            <Bell className="h-4.5 w-4.5 text-gray-500" />
+            {unreadCount > 0 && (
+              <span className="absolute right-1 top-1 flex h-4 min-w-[14px] items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-extrabold text-white">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </Link>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          <Outlet />
+        </div>
       </main>
     </div>
   )

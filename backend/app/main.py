@@ -4,7 +4,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.api.routes import auth, triage, appointments, clinics, patients, orders, dashboard, permissions, audit, sessions
+from app.api.routes import (
+    auth, triage, appointments, clinics, patients,
+    orders, dashboard, permissions, audit, sessions,
+)
+from app.api.routes import notifications, ws
 from app.middleware.audit import AuditMiddleware
 
 settings = get_settings()
@@ -12,7 +16,10 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    yield  # Schema is managed by Alembic migrations
+    # Init WebSocket Redis pub/sub (non-fatal if Redis is down)
+    from app.core.ws_manager import ws_manager
+    await ws_manager.init_redis(settings.redis_url)
+    yield
 
 
 app = FastAPI(
@@ -33,17 +40,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Routes ────────────────────────────────────────────────────────────────────
-app.include_router(auth.router,         prefix="/api/v1/auth",          tags=["auth"])
-app.include_router(triage.router,       prefix="/api/v1/triage",        tags=["triage"])
-app.include_router(appointments.router, prefix="/api/v1/appointments",  tags=["appointments"])
-app.include_router(clinics.router,      prefix="/api/v1/clinics",       tags=["clinics"])
-app.include_router(patients.router,     prefix="/api/v1/patients",      tags=["patients"])
-app.include_router(orders.router,       prefix="/api/v1/orders",        tags=["orders"])
-app.include_router(dashboard.router,    prefix="/api/v1/dashboard",     tags=["dashboard"])
-app.include_router(permissions.router,  prefix="/api/v1/permissions",   tags=["permissions"])
-app.include_router(audit.router,        prefix="/api/v1/audit-logs",    tags=["audit"])
-app.include_router(sessions.router,     prefix="/api/v1/sessions",      tags=["sessions"])
+# ── REST routes ───────────────────────────────────────────────────────────────
+app.include_router(auth.router,          prefix="/api/v1/auth",           tags=["auth"])
+app.include_router(triage.router,        prefix="/api/v1/triage",         tags=["triage"])
+app.include_router(appointments.router,  prefix="/api/v1/appointments",   tags=["appointments"])
+app.include_router(clinics.router,       prefix="/api/v1/clinics",        tags=["clinics"])
+app.include_router(patients.router,      prefix="/api/v1/patients",       tags=["patients"])
+app.include_router(orders.router,        prefix="/api/v1/orders",         tags=["orders"])
+app.include_router(dashboard.router,     prefix="/api/v1/dashboard",      tags=["dashboard"])
+app.include_router(permissions.router,   prefix="/api/v1/permissions",    tags=["permissions"])
+app.include_router(audit.router,         prefix="/api/v1/audit-logs",     tags=["audit"])
+app.include_router(sessions.router,      prefix="/api/v1/sessions",       tags=["sessions"])
+app.include_router(notifications.router, prefix="/api/v1/notifications",  tags=["notifications"])
+
+# ── WebSocket ─────────────────────────────────────────────────────────────────
+app.include_router(ws.router, tags=["websocket"])
 
 
 @app.get("/", tags=["health"])

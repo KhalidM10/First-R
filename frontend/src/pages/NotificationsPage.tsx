@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { formatDistanceToNow, parseISO } from 'date-fns'
 import {
   Activity, Bell, BellOff, Calendar, CheckCircle2,
@@ -7,276 +7,190 @@ import {
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
-import type { Appointment, MedOrder } from '../types'
+import { useWs } from '../contexts/WebSocketContext'
 
 type NotifCategory = 'all' | 'appointments' | 'orders' | 'health'
 
-type NotifItem = {
+interface ApiNotification {
   id: string
-  category: NotifCategory
-  icon: React.ElementType
-  iconBg: string
-  iconColor: string
+  type: string
   title: string
   body: string
-  time: string
-  href?: string
-  read: boolean
+  data: Record<string, unknown>
+  is_read: boolean
+  read_at: string | null
+  created_at: string
 }
 
-const READ_KEY = 'medassist_notif_read'
-
-function getReadIds(): Set<string> {
-  try {
-    return new Set(JSON.parse(localStorage.getItem(READ_KEY) ?? '[]'))
-  } catch {
-    return new Set()
-  }
+function categoryFromType(type: string): NotifCategory {
+  if (type.startsWith('appointment')) return 'appointments'
+  if (type.startsWith('order')) return 'orders'
+  if (type.startsWith('health')) return 'health'
+  return 'all'
 }
 
-function markReadIds(ids: string[]) {
-  const existing = getReadIds()
-  ids.forEach(id => existing.add(id))
-  localStorage.setItem(READ_KEY, JSON.stringify([...existing]))
+function iconFromType(type: string): { icon: React.ElementType; bg: string; color: string } {
+  if (type.includes('confirmed'))  return { icon: Calendar,     bg: '#DBEAFE', color: '#1E40AF' }
+  if (type.includes('cancelled'))  return { icon: Calendar,     bg: '#FEF2F2', color: '#DC2626' }
+  if (type.includes('completed'))  return { icon: CheckCircle2, bg: '#F0FDF4', color: '#059669' }
+  if (type.includes('appointment')) return { icon: Calendar,    bg: '#EFF6FF', color: '#1E40AF' }
+  if (type.includes('order'))      return { icon: Package,      bg: '#FFFBEB', color: '#B45309' }
+  if (type.includes('health'))     return { icon: Activity,     bg: '#F0FDF4', color: '#059669' }
+  return { icon: Bell, bg: '#F8FAFC', color: '#64748B' }
 }
 
-function buildNotifications(
-  appointments: Appointment[],
-  orders: (MedOrder & { order_number?: string })[],
-  readIds: Set<string>,
-): NotifItem[] {
-  const items: NotifItem[] = []
-
-  for (const appt of appointments) {
-    const id = `appt-${appt.id}`
-    if (appt.status === 'confirmed') {
-      items.push({
-        id,
-        category: 'appointments',
-        icon: Calendar,
-        iconBg: '#EFF6FF',
-        iconColor: '#1E40AF',
-        title: 'Appointment Confirmed',
-        body: `Your appointment with ${appt.doctor_name ?? 'the doctor'} at ${appt.clinic_name ?? 'the clinic'} is confirmed.`,
-        time: appt.created_at,
-        href: '/appointments',
-        read: readIds.has(id),
-      })
-    } else if (appt.status === 'cancelled') {
-      items.push({
-        id: `appt-cancel-${appt.id}`,
-        category: 'appointments',
-        icon: Calendar,
-        iconBg: '#FEF2F2',
-        iconColor: '#DC2626',
-        title: 'Appointment Cancelled',
-        body: `Your appointment on ${appt.appointment_date} has been cancelled.`,
-        time: appt.created_at,
-        href: '/appointments',
-        read: readIds.has(`appt-cancel-${appt.id}`),
-      })
-    } else if (appt.status === 'completed') {
-      const id2 = `appt-done-${appt.id}`
-      items.push({
-        id: id2,
-        category: 'appointments',
-        icon: CheckCircle2,
-        iconBg: '#F0FDF4',
-        iconColor: '#059669',
-        title: 'Appointment Completed',
-        body: `Your visit with ${appt.doctor_name ?? 'the doctor'} is complete. Leave a review?`,
-        time: appt.created_at,
-        href: '/appointments',
-        read: readIds.has(id2),
-      })
-    }
-  }
-
-  for (const order of orders) {
-    const ref = (order as any).order_number ?? (order as any).order_reference ?? order.id
-    const id = `order-${order.id}`
-    const statusMsgs: Record<string, { title: string; body: string; bg: string; color: string }> = {
-      pending:    { title: 'Order Received', body: `Order ${ref} is being reviewed.`, bg: '#FFFBEB', color: '#B45309' },
-      processing: { title: 'Order Processing', body: `Order ${ref} is being prepared.`, bg: '#EFF6FF', color: '#1E40AF' },
-      ready:      { title: 'Order Ready', body: `Order ${ref} is ready for pickup or dispatch.`, bg: '#F0FDF4', color: '#059669' },
-      delivered:  { title: 'Order Delivered', body: `Order ${ref} has been delivered. Enjoy your health!`, bg: '#F0FDF4', color: '#059669' },
-    }
-    const cfg = statusMsgs[(order as any).status ?? 'pending']
-    if (cfg) {
-      items.push({
-        id,
-        category: 'orders',
-        icon: Package,
-        iconBg: cfg.bg,
-        iconColor: cfg.color,
-        title: cfg.title,
-        body: cfg.body,
-        time: order.created_at,
-        href: '/medicines',
-        read: readIds.has(id),
-      })
-    }
-  }
-
-  // Health tip (static, seeded once per day)
-  const tipId = `health-tip-${new Date().toISOString().slice(0, 10)}`
-  const tips = [
-    'Drink at least 8 glasses of water today. Hydration improves focus and immune function.',
-    'A 30-minute walk today can reduce your risk of cardiovascular disease by up to 35%.',
-    'Regular sleep of 7–9 hours helps your immune system fight infections more effectively.',
-    'Eating leafy greens daily provides folate and iron — critical for energy levels.',
-  ]
-  const tipBody = tips[new Date().getDate() % tips.length]
-  items.push({
-    id: tipId,
-    category: 'health',
-    icon: Activity,
-    iconBg: '#F0FDF4',
-    iconColor: '#059669',
-    title: 'Daily Health Tip',
-    body: tipBody,
-    time: new Date().toISOString(),
-    read: readIds.has(tipId),
-  })
-
-  return items.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+// ── Static health tip (seeded daily) ─────────────────────────────────────────
+const HEALTH_TIPS = [
+  'Drink at least 8 glasses of water today. Hydration improves focus and immune function.',
+  'A 30-minute walk today can reduce your risk of cardiovascular disease by up to 35%.',
+  'Regular sleep of 7–9 hours helps your immune system fight infections more effectively.',
+  'Eating leafy greens daily provides folate and iron — critical for energy levels.',
+]
+const DAILY_TIP: ApiNotification = {
+  id: `health-tip-${new Date().toISOString().slice(0, 10)}`,
+  type: 'health_tip',
+  title: 'Daily Health Tip',
+  body: HEALTH_TIPS[new Date().getDate() % HEALTH_TIPS.length],
+  data: {},
+  is_read: false,
+  read_at: null,
+  created_at: new Date().toISOString(),
 }
 
-function NotifCard({ item, onRead }: { item: NotifItem; onRead: (id: string) => void }) {
+// ── Card component ────────────────────────────────────────────────────────────
+
+function NotifCard({
+  notif, onRead,
+}: { notif: ApiNotification; onRead: (id: string) => void }) {
   const navigate = useNavigate()
+  const { icon: Icon, bg, color } = iconFromType(notif.type)
 
   function handleClick() {
-    onRead(item.id)
-    if (item.href) navigate(item.href)
+    onRead(notif.id)
+    const href =
+      notif.type.startsWith('appointment') ? '/appointments'
+      : notif.type.startsWith('order') ? '/medicines'
+      : null
+    if (href) navigate(href)
   }
 
   return (
     <button
       onClick={handleClick}
-      className="w-full flex items-start gap-4 text-left transition-colors hover:bg-gray-50 rounded-2xl p-4 -mx-1"
-      style={{ paddingLeft: 16, paddingRight: 16 }}
+      className="w-full flex items-start gap-4 text-left transition-colors hover:bg-gray-50 rounded-2xl p-4"
     >
-      {/* Icon */}
       <div
         className="h-10 w-10 shrink-0 rounded-xl flex items-center justify-center mt-0.5"
-        style={{ backgroundColor: item.iconBg }}
+        style={{ backgroundColor: bg }}
       >
-        <item.icon className="h-4.5 w-4.5" style={{ color: item.iconColor }} />
+        <Icon className="h-[18px] w-[18px]" style={{ color }} />
       </div>
 
-      {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
-          <p className={`text-sm ${item.read ? 'font-medium text-gray-700' : 'font-bold text-gray-900'}`}>
-            {item.title}
+          <p className={`text-sm ${notif.is_read ? 'font-medium text-gray-700' : 'font-bold text-gray-900'}`}>
+            {notif.title}
           </p>
-          {!item.read && (
-            <span className="shrink-0 h-2 w-2 rounded-full mt-1.5" style={{ backgroundColor: '#1E40AF' }} />
+          {!notif.is_read && (
+            <span className="shrink-0 h-2 w-2 rounded-full mt-1.5 bg-blue-600" />
           )}
         </div>
-        <p className="text-xs text-gray-500 mt-0.5 leading-relaxed line-clamp-2">{item.body}</p>
+        <p className="text-xs text-gray-500 mt-0.5 leading-relaxed line-clamp-2">{notif.body}</p>
         <div className="flex items-center gap-1 mt-1.5">
           <Clock className="h-3 w-3 text-gray-300" />
           <span className="text-[10px] text-gray-400">
-            {formatDistanceToNow(parseISO(item.time), { addSuffix: true })}
+            {formatDistanceToNow(parseISO(notif.created_at), { addSuffix: true })}
           </span>
         </div>
       </div>
 
-      {item.href && (
+      {!notif.type.startsWith('health') && (
         <ChevronRight className="h-4 w-4 text-gray-300 shrink-0 mt-2.5" />
       )}
     </button>
   )
 }
 
+// ── Page ─────────────────────────────────────────────────────────────────────
+
 export function NotificationsPage() {
   const [category, setCategory] = useState<NotifCategory>('all')
-  const [readIds, setReadIds] = useState<Set<string>>(getReadIds)
+  const qc = useQueryClient()
+  const { unreadCount } = useWs()
 
-  const { data: appointments = [] } = useQuery<Appointment[]>({
-    queryKey: ['my-appointments-all'],
-    queryFn: async () => {
-      const [upcoming, past, cancelled] = await Promise.all([
-        api.get('/appointments/my', { params: { filter: 'upcoming' } }),
-        api.get('/appointments/my', { params: { filter: 'past' } }),
-        api.get('/appointments/my', { params: { filter: 'cancelled' } }),
-      ])
-      return [...(upcoming.data ?? []), ...(past.data ?? []), ...(cancelled.data ?? [])]
-    },
-    staleTime: 60_000,
+  const { data, isLoading } = useQuery<{ total: number; unread: number; items: ApiNotification[] }>({
+    queryKey: ['notifications'],
+    queryFn: () => api.get('/notifications').then(r => r.data),
+    staleTime: 30_000,
   })
 
-  const { data: orders = [] } = useQuery({
-    queryKey: ['my-orders'],
-    queryFn: async () => {
-      const { data } = await api.get('/orders/my')
-      return data ?? []
-    },
-    staleTime: 60_000,
+  // Merge API notifications + static daily tip
+  const allNotifs: ApiNotification[] = [
+    ...(data?.items ?? []),
+    DAILY_TIP,
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+  const filtered =
+    category === 'all'
+      ? allNotifs
+      : allNotifs.filter(n => categoryFromType(n.type) === category)
+
+  const liveUnread = unreadCount + (DAILY_TIP.is_read ? 0 : 1)
+
+  // Mark single read
+  const markRead = useMutation({
+    mutationFn: (ids: string[]) => api.post('/notifications/read', ids),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
   })
 
-  const allNotifs = buildNotifications(
-    appointments,
-    Array.isArray(orders) ? orders : [],
-    readIds,
-  )
-
-  const filtered = category === 'all'
-    ? allNotifs
-    : allNotifs.filter(n => n.category === category)
-
-  const unreadCount = allNotifs.filter(n => !n.read).length
+  // Mark all read
+  const markAllRead = useMutation({
+    mutationFn: () => api.post('/notifications/read-all'),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+  })
 
   function handleRead(id: string) {
-    markReadIds([id])
-    setReadIds(prev => {
-      const next = new Set(prev)
-      next.add(id)
-      return next
-    })
+    if (!id.startsWith('health-tip-')) {
+      markRead.mutate([id])
+    }
   }
 
-  function markAllRead() {
-    const ids = allNotifs.map(n => n.id)
-    markReadIds(ids)
-    setReadIds(new Set(ids))
-  }
-
-  const tabs: { key: NotifCategory; label: string; icon: React.ElementType }[] = [
-    { key: 'all', label: 'All', icon: Bell },
-    { key: 'appointments', label: 'Appointments', icon: Calendar },
-    { key: 'orders', label: 'Orders', icon: Package },
-    { key: 'health', label: 'Health Tips', icon: Stethoscope },
+  const TABS: { key: NotifCategory; label: string; icon: React.ElementType }[] = [
+    { key: 'all',          label: 'All',          icon: Bell },
+    { key: 'appointments', label: 'Appointments',  icon: Calendar },
+    { key: 'orders',       label: 'Orders',        icon: Package },
+    { key: 'health',       label: 'Health Tips',   icon: Stethoscope },
   ]
 
   return (
     <div className="space-y-5 animate-fade-in">
 
-      {/* ── Header ───────────────────────────────────────────── */}
+      {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Notifications</h1>
           <p className="text-sm text-gray-400 mt-0.5">
-            {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
+            {liveUnread > 0 ? `${liveUnread} unread` : 'All caught up'}
           </p>
         </div>
-        {unreadCount > 0 && (
+        {liveUnread > 0 && (
           <button
-            onClick={markAllRead}
-            className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+            onClick={() => markAllRead.mutate()}
+            disabled={markAllRead.isPending}
+            className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
           >
             <CheckCircle2 className="h-3.5 w-3.5" /> Mark all read
           </button>
         )}
       </div>
 
-      {/* ── Category tabs ─────────────────────────────────────── */}
+      {/* Category tabs */}
       <div className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1">
-        {tabs.map(tab => {
-          const count = tab.key === 'all'
-            ? unreadCount
-            : allNotifs.filter(n => n.category === tab.key && !n.read).length
+        {TABS.map(tab => {
+          const count =
+            tab.key === 'all'
+              ? liveUnread
+              : allNotifs.filter(n => categoryFromType(n.type) === tab.key && !n.is_read).length
           return (
             <button
               key={tab.key}
@@ -307,12 +221,15 @@ export function NotificationsPage() {
         })}
       </div>
 
-      {/* ── Notification list ─────────────────────────────────── */}
-      <div
-        className="bg-white rounded-2xl overflow-hidden"
-        style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
-      >
-        {filtered.length === 0 ? (
+      {/* List */}
+      <div className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+        {isLoading ? (
+          <div className="p-4 space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-16 rounded-xl bg-gray-100 animate-pulse" />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center py-16 text-center px-6">
             <div className="h-14 w-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
               <BellOff className="h-7 w-7 text-gray-400" />
@@ -326,8 +243,8 @@ export function NotificationsPage() {
           </div>
         ) : (
           <div className="divide-y divide-gray-50 px-1">
-            {filtered.map(item => (
-              <NotifCard key={item.id} item={item} onRead={handleRead} />
+            {filtered.map(notif => (
+              <NotifCard key={notif.id} notif={notif} onRead={handleRead} />
             ))}
           </div>
         )}
@@ -335,7 +252,7 @@ export function NotificationsPage() {
 
       {filtered.length > 0 && (
         <p className="text-[11px] text-gray-400 text-center">
-          Notifications are generated from your account activity.
+          Notifications are generated from your account activity and delivered in real time.
         </p>
       )}
     </div>

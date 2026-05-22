@@ -1,4 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { WebSocketProvider } from './contexts/WebSocketContext'
+import { NotificationToast } from './components/ui/NotificationToast'
 import { AppLayout } from './components/layout/AppLayout'
 import { ClinicLayout } from './components/clinic/ClinicLayout'
 import { useAuthStore } from './store/auth'
@@ -64,6 +66,8 @@ function PatientOrClinicRedirect() {
 
 export default function App() {
   return (
+    <WebSocketProvider>
+      <NotificationToast />
     <Routes>
       {/* Public */}
       <Route path="/" element={<LandingPage />} />
@@ -115,5 +119,6 @@ export default function App() {
         }
       />
     </Routes>
+    </WebSocketProvider>
   )
 }

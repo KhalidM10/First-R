@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router-dom'
 import { format, parseISO } from 'date-fns'
 import {
   AlertCircle, Calendar, CalendarPlus, Clock, MapPin,
-  RefreshCw, Stethoscope, XCircle,
+  RefreshCw, Star, Stethoscope, XCircle,
 } from 'lucide-react'
 import { api } from '../lib/api'
+import { ReviewModal } from '../components/ui/ReviewModal'
 import type { Appointment } from '../types'
 
 type Filter = 'upcoming' | 'past' | 'cancelled'
@@ -18,10 +19,11 @@ const STATUS_CFG: Record<string, { label: string; bg: string; text: string }> = 
   cancelled: { label: 'Cancelled', bg: '#FEF2F2', text: '#DC2626' },
 }
 
-function AppointmentCard({ appt, showCancel }: { appt: Appointment; showCancel: boolean }) {
+function AppointmentCard({ appt, showCancel, showReview }: { appt: Appointment; showCancel: boolean; showReview?: boolean }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const cfg = STATUS_CFG[appt.status] ?? STATUS_CFG.pending
+  const [reviewOpen, setReviewOpen] = useState(false)
 
   const { mutateAsync: cancelAppt, isPending } = useMutation({
     mutationFn: async () => {
@@ -100,7 +102,7 @@ function AppointmentCard({ appt, showCancel }: { appt: Appointment; showCancel: 
       </div>
 
       {/* Actions */}
-      {(showCancel || appt.status === 'cancelled') && (
+      {(showCancel || showReview || appt.status === 'cancelled') && (
         <div className="flex gap-2 mt-3 pt-3 border-t border-gray-50">
           {showCancel && appt.status !== 'cancelled' && (
             <button
@@ -114,6 +116,14 @@ function AppointmentCard({ appt, showCancel }: { appt: Appointment; showCancel: 
               {isPending ? 'Cancelling…' : 'Cancel'}
             </button>
           )}
+          {showReview && (
+            <button
+              onClick={() => setReviewOpen(true)}
+              className="flex items-center gap-1.5 text-xs font-semibold text-amber-600 hover:text-amber-700 transition-colors"
+            >
+              <Star className="h-3.5 w-3.5" /> Leave a Review
+            </button>
+          )}
           <button
             onClick={() => navigate(`/book/${appt.clinic_id}`)}
             className="ml-auto flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
@@ -122,6 +132,8 @@ function AppointmentCard({ appt, showCancel }: { appt: Appointment; showCancel: 
           </button>
         </div>
       )}
+
+      {reviewOpen && <ReviewModal appointment={appt} onClose={() => setReviewOpen(false)} />}
     </div>
   )
 }
@@ -224,6 +236,7 @@ export function AppointmentsPage() {
               key={appt.id}
               appt={appt}
               showCancel={filter === 'upcoming'}
+              showReview={appt.status === 'completed'}
             />
           ))}
         </div>

@@ -1,6 +1,9 @@
 import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format, parseISO } from 'date-fns'
-import { Star, ThumbsUp, MessageSquare, TrendingUp, Filter } from 'lucide-react'
+import { Star, ThumbsUp, MessageSquare, TrendingUp, Filter, CornerDownRight, Send, Loader2 } from 'lucide-react'
+import { api } from '../../lib/api'
+import { useAuthStore } from '../../store/auth'
 import { cn } from '../../lib/utils'
 
 interface Review {
@@ -126,8 +129,26 @@ function RatingDistribution({ reviews }: { reviews: Review[] }) {
   )
 }
 
-function ReviewCard({ review }: { review: Review }) {
-  const [liked, setLiked] = useState(false)
+function ReviewCard({ review, clinicId }: { review: Review; clinicId?: string }) {
+  const qc = useQueryClient()
+  const [liked, setLiked]         = useState(false)
+  const [replyOpen, setReplyOpen] = useState(false)
+  const [replyText, setReplyText] = useState('')
+
+  const replyMutation = useMutation({
+    mutationFn: () =>
+      api.post(`/clinics/${clinicId}/reviews/${review.id}/reply`, { reply: replyText.trim() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['clinic-reviews', clinicId] })
+      setReplyOpen(false)
+      setReplyText('')
+    },
+    onError: () => {
+      qc.invalidateQueries({ queryKey: ['clinic-reviews', clinicId] })
+      setReplyOpen(false)
+      setReplyText('')
+    },
+  })
 
   return (
     <div
@@ -176,24 +197,83 @@ function ReviewCard({ review }: { review: Review }) {
           {review.category}
         </span>
 
-        <button
-          onClick={() => setLiked(v => !v)}
-          className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-gray-100"
-          style={{ color: liked ? '#1E40AF' : '#9CA3AF' }}
-        >
-          <ThumbsUp className={cn('h-3.5 w-3.5', liked && 'fill-current')} />
-          {review.helpful + (liked ? 1 : 0)} helpful
-        </button>
+        <div className="flex items-center gap-2">
+          {!review.replied && (
+            <button
+              onClick={() => setReplyOpen(v => !v)}
+              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-gray-100"
+              style={{ color: replyOpen ? '#1E40AF' : '#9CA3AF' }}
+            >
+              <MessageSquare className="h-3.5 w-3.5" /> Reply
+            </button>
+          )}
+          <button
+            onClick={() => setLiked(v => !v)}
+            className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-gray-100"
+            style={{ color: liked ? '#1E40AF' : '#9CA3AF' }}
+          >
+            <ThumbsUp className={cn('h-3.5 w-3.5', liked && 'fill-current')} />
+            {review.helpful + (liked ? 1 : 0)} helpful
+          </button>
+        </div>
       </div>
+
+      {replyOpen && (
+        <div className="pt-2 border-t border-gray-50">
+          <div className="flex items-start gap-2">
+            <CornerDownRight className="h-3.5 w-3.5 text-gray-300 mt-3 shrink-0" />
+            <div className="flex-1 space-y-2">
+              <textarea
+                value={replyText}
+                onChange={e => setReplyText(e.target.value)}
+                rows={2}
+                placeholder="Write a reply to this review…"
+                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
+              />
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  onClick={() => { setReplyOpen(false); setReplyText('') }}
+                  className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => replyMutation.mutate()}
+                  disabled={replyText.trim().length < 5 || replyMutation.isPending}
+                  className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold text-white transition-all disabled:opacity-40"
+                  style={{ backgroundColor: '#1E40AF' }}
+                >
+                  {replyMutation.isPending
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : <Send className="h-3.5 w-3.5" />}
+                  Post Reply
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
 export function ClinicReviewsPage() {
+  const { user } = useAuthStore()
+  const clinicId = user?.clinic_id
+
   const [filterRating, setFilterRating] = useState<number | null>(null)
   const [filterCategory, setFilterCategory] = useState<string>('all')
 
-  const reviews = MOCK_REVIEWS
+  const { data: apiReviews } = useQuery<Review[]>({
+    queryKey: ['clinic-reviews', clinicId],
+    queryFn: async () => {
+      const { data } = await api.get(`/clinics/${clinicId}/reviews`)
+      return data
+    },
+    enabled: !!clinicId,
+  })
+
+  const reviews = apiReviews && apiReviews.length > 0 ? apiReviews : MOCK_REVIEWS
 
   const filtered = reviews.filter(r => {
     const matchRating = filterRating === null || r.rating === filterRating
@@ -312,7 +392,7 @@ export function ClinicReviewsPage() {
       ) : (
         <div className="space-y-4">
           {filtered.map(review => (
-            <ReviewCard key={review.id} review={review} />
+            <ReviewCard key={review.id} review={review} clinicId={clinicId} />
           ))}
         </div>
       )}

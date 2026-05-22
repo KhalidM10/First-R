@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Store, Search, Package, AlertCircle, Plus, Filter } from 'lucide-react'
+import { Store, Search, Package, Rocket, Filter } from 'lucide-react'
 import { api } from '../../lib/api'
 import { useAuthStore } from '../../store/auth'
 import { formatKES, cn } from '../../lib/utils'
@@ -143,15 +143,10 @@ export function ClinicProductsPage() {
             {products.length} products · {formatKES(totalValue)} inventory value
           </p>
         </div>
-        <button
-          className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm opacity-60 cursor-not-allowed"
-          style={{ backgroundColor: '#1E40AF' }}
-          title="Coming soon"
-          disabled
-        >
-          <Plus className="h-4 w-4" />
-          Add Product
-        </button>
+        <span className="flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100">
+          <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-pulse" />
+          Launching next sprint
+        </span>
       </div>
 
       {/* Stats */}
@@ -234,13 +229,22 @@ export function ClinicProductsPage() {
         </div>
       )}
 
-      {/* Info note */}
-      <div className="flex items-start gap-3 rounded-2xl bg-blue-50 p-4">
-        <AlertCircle className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
-        <div>
-          <p className="text-sm font-semibold text-blue-800">Product management</p>
-          <p className="text-xs text-blue-600 mt-0.5">
-            Full product CRUD (add, edit, restock, deactivate) is launching next sprint. Contact support to update your product catalog.
+      {/* Announcement banner */}
+      <div className="rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-blue-50 p-5 flex items-start gap-4">
+        <div className="h-10 w-10 shrink-0 rounded-xl bg-indigo-100 flex items-center justify-center">
+          <Rocket className="h-5 w-5 text-indigo-600" />
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <p className="text-sm font-bold text-indigo-900">Full Product Management — Launching Next Sprint</p>
+            <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold uppercase tracking-wide">Soon</span>
+          </div>
+          <p className="text-xs text-indigo-700 leading-relaxed">
+            Add, edit, restock, and deactivate products directly from your dashboard. Until then, contact{' '}
+            <a href="mailto:support@medassist.co.ke" className="font-semibold underline underline-offset-2 hover:text-indigo-900 transition-colors">
+              support@medassist.co.ke
+            </a>{' '}
+            to update your product catalog.
           </p>
         </div>
       </div>

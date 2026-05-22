@@ -8,6 +8,31 @@ import {
   Quote,
 } from 'lucide-react'
 import { TriageDemo } from '../components/landing/TriageDemo'
+import { SEO } from '../components/seo/SEO'
+
+const JSON_LD_MEDICAL_BUSINESS = {
+  '@context': 'https://schema.org',
+  '@type': 'MedicalBusiness',
+  name: 'MedAssist AI',
+  description: 'AI-powered healthcare platform connecting Kenyan patients with clinics through intelligent triage, instant booking, and medicine ordering.',
+  url: 'https://medassist.ai',
+  areaServed: { '@type': 'Country', name: 'Kenya' },
+  availableService: [
+    { '@type': 'MedicalTherapy', name: 'AI Symptom Triage' },
+    { '@type': 'MedicalTherapy', name: 'Clinic Appointment Booking' },
+    { '@type': 'MedicalTherapy', name: 'Online Medicine Ordering' },
+  ],
+}
+
+const JSON_LD_WEB_APP = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'MedAssist AI',
+  url: 'https://medassist.ai',
+  applicationCategory: 'HealthApplication',
+  operatingSystem: 'Any',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'KES' },
+}
 
 const INTER = "'Inter', system-ui, -apple-system, sans-serif"
 
@@ -287,6 +312,11 @@ export function LandingPage() {
 
   return (
     <div style={{ fontFamily: INTER, background: 'white', color: '#0f172a', overflowX: 'hidden' }}>
+      <SEO
+        canonical="https://medassist.ai/"
+        keywords="healthcare Kenya, AI triage, clinic booking Nairobi, online doctor, medicine delivery Kenya"
+        jsonLd={[JSON_LD_MEDICAL_BUSINESS, JSON_LD_WEB_APP]}
+      />
       <Navbar />
 
       {/* ── 1. HERO ─────────────────────────────────────────────────────────── */}

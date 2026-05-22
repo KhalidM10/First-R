@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Full bleed background for maskable safe zone -->
+  <rect width="512" height="512" fill="#0d1f10"/>
+  <!-- Safe zone content (center 80%) -->
+  <rect x="205" y="205" width="102" height="102" rx="20" fill="rgba(74,222,128,0.15)" stroke="rgba(74,222,128,0.3)" stroke-width="2"/>
+  <polyline points="213,256 228,256 234,238 256,276 278,222 284,256 299,256"
+    fill="none" stroke="#4ade80" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

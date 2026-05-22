@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { api } from '../lib/api'
 import type { ClinicDetail, Doctor } from '../types'
+import { SEO } from '../components/seo/SEO'
 
 const DAY_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
 const DAY_LABELS: Record<string, string> = {
@@ -155,8 +156,32 @@ export function ClinicProfilePage() {
 
   const activeDoctors = clinic.doctors?.filter(d => d.is_active) ?? []
 
+  const clinicJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'MedicalClinic',
+    name: clinic.name,
+    description: `Book appointments at ${clinic.name} in ${clinic.county ?? 'Kenya'}. ${clinic.specialties?.join(', ') ?? ''}`,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: clinic.address,
+      addressRegion: clinic.county,
+      addressCountry: 'KE',
+    },
+    telephone: clinic.phone,
+    email: clinic.email,
+    medicalSpecialty: clinic.specialties,
+    url: `https://medassist.ai/clinics/${clinic.id}`,
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
+      <SEO
+        title={`${clinic.name} — Book Appointments`}
+        description={`Book appointments at ${clinic.name} in ${clinic.county ?? 'Kenya'}. ${activeDoctors.length} doctor${activeDoctors.length !== 1 ? 's' : ''} available. Instant confirmation.`}
+        canonical={`https://medassist.ai/clinics/${clinic.id}`}
+        keywords={`${clinic.name}, clinic ${clinic.county ?? 'Kenya'}, ${clinic.specialties?.join(', ') ?? 'healthcare'}`}
+        jsonLd={clinicJsonLd}
+      />
       {/* Back */}
       <button
         onClick={() => navigate('/clinics')}

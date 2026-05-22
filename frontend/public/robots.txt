@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Allow: /clinics
+Allow: /login
+Allow: /register
+Disallow: /dashboard
+Disallow: /clinic-dashboard
+Disallow: /api/
+Disallow: /ws
+Disallow: /triage
+Disallow: /appointments
+Disallow: /medicines
+Disallow: /profile
+Disallow: /notifications
+Disallow: /sessions
+
+Sitemap: https://medassist.ai/sitemap.xml

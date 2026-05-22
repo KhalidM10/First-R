@@ -43,6 +43,8 @@ class RegisterRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+    totp_code: Optional[str] = None
+    backup_code: Optional[str] = None
 
 
 class UserResponse(BaseModel):

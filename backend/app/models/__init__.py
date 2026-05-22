@@ -13,3 +13,4 @@ from app.models.order import Order  # noqa: F401
 from app.models.review import Review  # noqa: F401
 from app.models.notification import Notification  # noqa: F401
 from app.models.analytics import AnalyticsSnapshot  # noqa: F401
+from app.models.auth_security import PasswordHistory, TOTPBackupCode  # noqa: F401

@@ -18,6 +18,9 @@ import { ClinicAppointmentsPage }     from './pages/clinic/ClinicAppointmentsPag
 import { ClinicAnalyticsPage }        from './pages/clinic/ClinicAnalyticsPage'
 import { ClinicSubscriptionPage }     from './pages/clinic/ClinicSubscriptionPage'
 import { ClinicAuditPage }           from './pages/clinic/ClinicAuditPage'
+import { ClinicLoginPage }           from './pages/ClinicLoginPage'
+import { ForgotPasswordPage }        from './pages/ForgotPasswordPage'
+import { SessionsPage }              from './pages/SessionsPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
@@ -67,8 +70,10 @@ export default function App() {
     <Routes>
       {/* Public */}
       <Route path="/" element={<LandingPage />} />
-      <Route path="/login"    element={<GuestRoute><LoginPage /></GuestRoute>} />
-      <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
+      <Route path="/login"          element={<GuestRoute><LoginPage /></GuestRoute>} />
+      <Route path="/clinic-login"   element={<GuestRoute><ClinicLoginPage /></GuestRoute>} />
+      <Route path="/register"       element={<GuestRoute><RegisterPage /></GuestRoute>} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
       {/* Clinic portal — all clinic staff roles */}
       <Route
@@ -98,6 +103,7 @@ export default function App() {
                 <Route path="/appointments/new" element={<Navigate to="/clinics" replace />} />
                 <Route path="/medicines"        element={<MedicineOrderPage />} />
                 <Route path="/profile"          element={<ProfilePlaceholder />} />
+                <Route path="/sessions"         element={<SessionsPage />} />
                 <Route path="*"                 element={<Navigate to="/dashboard" replace />} />
               </Routes>
             </AppLayout>

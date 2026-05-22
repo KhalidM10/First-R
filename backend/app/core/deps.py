@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Cookie, Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
 from sqlalchemy.orm import Session
@@ -10,12 +10,27 @@ from app.database import get_db
 from app.core.security import decode_token
 from app.models.user import User
 
-bearer = HTTPBearer()
-bearer_optional = HTTPBearer(auto_error=False)
+bearer = HTTPBearer(auto_error=False)
+
+
+def _get_token(
+    credentials: Optional[HTTPAuthorizationCredentials],
+    access_token_cookie: Optional[str],
+) -> Optional[str]:
+    """
+    Token priority:
+    1. Authorization: Bearer header (explicit, for API clients)
+    2. access_token httpOnly cookie (browser-based sessions)
+    """
+    if credentials and credentials.credentials:
+        return credentials.credentials
+    return access_token_cookie
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer),
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer),
+    access_token: Optional[str] = Cookie(None),
     db: Session = Depends(get_db),
 ) -> User:
     exc = HTTPException(
@@ -23,8 +38,13 @@ def get_current_user(
         detail="Invalid or expired token",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+    token = _get_token(credentials, access_token)
+    if not token:
+        raise exc
+
     try:
-        payload = decode_token(credentials.credentials)
+        payload = decode_token(token)
         user_id: str = payload.get("sub")
         if not user_id or payload.get("type") != "access":
             raise exc
@@ -45,13 +65,15 @@ def get_current_user(
 
 
 def get_optional_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_optional),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer),
+    access_token: Optional[str] = Cookie(None),
     db: Session = Depends(get_db),
 ) -> Optional[User]:
-    if not credentials:
+    token = _get_token(credentials, access_token)
+    if not token:
         return None
     try:
-        payload = decode_token(credentials.credentials)
+        payload = decode_token(token)
         user_id: str = payload.get("sub")
         if not user_id or payload.get("type") != "access":
             return None
@@ -61,7 +83,6 @@ def get_optional_user(
 
 
 def require_role(*roles: str):
-    """Dependency factory: ensures current user has one of the given roles."""
     def checker(current_user: User = Depends(get_current_user)) -> User:
         if current_user.role not in roles:
             raise HTTPException(
@@ -73,17 +94,6 @@ def require_role(*roles: str):
 
 
 def require_permission(permission_name: str):
-    """
-    Dependency factory: checks that the current user holds the named permission.
-
-    Usage:
-        @router.get("/appointments")
-        def list_appointments(
-            user = Depends(require_permission("appointments:read"))
-        ):
-
-    Logs a blocked audit event before raising 403.
-    """
     def checker(
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db),

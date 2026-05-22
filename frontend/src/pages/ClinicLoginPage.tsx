@@ -4,12 +4,14 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Activity, Building2, Eye, EyeOff, ShieldCheck, User } from 'lucide-react'
+import {
+  Activity, Building2, Eye, EyeOff, ShieldCheck,
+  Users, ClipboardList, BarChart3,
+} from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { useAuthStore } from '../store/auth'
 import { CLINIC_ROLES } from '../types'
-import { cn } from '../lib/utils'
 
 const schema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -19,16 +21,15 @@ const schema = z.object({
 })
 type FormValues = z.infer<typeof schema>
 
-const STATS = [
-  { value: '500+', label: 'Clinics' },
-  { value: '50K+', label: 'Patients' },
-  { value: '99.9%', label: 'Uptime' },
+const FEATURES = [
+  { icon: Users, title: 'Patient Management', desc: 'Full patient history and records' },
+  { icon: ClipboardList, title: 'Appointment Flow', desc: 'Schedule, reschedule, and track' },
+  { icon: BarChart3, title: 'Clinic Analytics', desc: 'Revenue, capacity, and outcomes' },
 ]
 
-export function LoginPage() {
+export function ClinicLoginPage() {
   const navigate = useNavigate()
   const { login } = useAuthStore()
-  const [mode, setMode] = useState<'patient' | 'clinic'>('patient')
   const [serverError, setServerError] = useState('')
   const [requires2FA, setRequires2FA] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -44,11 +45,12 @@ export function LoginPage() {
     try {
       await login(values.email, values.password, values.totp_code, values.backup_code)
       const user = useAuthStore.getState().user
-      if (user && CLINIC_ROLES.includes(user.role)) {
-        navigate('/clinic-dashboard', { replace: true })
-      } else {
-        navigate('/dashboard', { replace: true })
+      if (!user || !CLINIC_ROLES.includes(user.role)) {
+        setServerError('This portal is for clinic staff only. Please use the patient login.')
+        useAuthStore.getState().logout()
+        return
       }
+      navigate('/clinic-dashboard', { replace: true })
     } catch (err: any) {
       if (err?.response?.status === 403 && err?.response?.headers?.['x-2fa-required']) {
         setRequires2FA(true)
@@ -60,63 +62,81 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left: form */}
-      <div className="flex flex-1 flex-col justify-center px-6 py-12 lg:px-12 xl:px-16 bg-white">
+      {/* Left: branding */}
+      <div className="hidden lg:flex w-[420px] shrink-0 flex-col bg-[#0F172A] text-white px-10 py-12">
+        <div className="flex items-center gap-3 mb-12">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500">
+            <Activity className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <p className="font-bold text-white text-base leading-none">MedAssist AI</p>
+            <p className="text-xs text-slate-400">Clinic Portal</p>
+          </div>
+        </div>
+
+        <div className="flex-1">
+          <h2 className="text-3xl font-bold mb-3 leading-tight">
+            Clinic management,<br />reimagined.
+          </h2>
+          <p className="text-slate-400 text-base leading-relaxed mb-10">
+            Everything your team needs — from scheduling to analytics — in one secure platform.
+          </p>
+
+          <div className="space-y-5">
+            {FEATURES.map(({ icon: Icon, title, desc }) => (
+              <div key={title} className="flex items-start gap-4">
+                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/20">
+                  <Icon className="h-4 w-4 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">{title}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p className="text-xs text-slate-600">
+          © 2026 MedAssist AI · Kenya Health Platform
+        </p>
+      </div>
+
+      {/* Right: form */}
+      <div className="flex flex-1 flex-col justify-center px-6 py-12 lg:px-16 xl:px-24 bg-white">
         <div className="w-full max-w-sm mx-auto">
-          <Link to="/" className="flex items-center gap-3 mb-10">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-700 shadow-sm">
+          {/* Mobile logo */}
+          <div className="flex items-center gap-3 mb-10 lg:hidden">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-700">
               <Activity className="h-5 w-5 text-white" />
             </div>
             <div>
-              <p className="font-bold text-gray-900 text-lg leading-none">MedAssist AI</p>
-              <p className="text-xs text-gray-500">Kenya Health Platform</p>
+              <p className="font-bold text-gray-900">MedAssist AI</p>
+              <p className="text-xs text-gray-500">Clinic Portal</p>
             </div>
-          </Link>
-
-          {/* Patient / Clinic toggle */}
-          <div className="flex rounded-xl bg-gray-100 p-1 mb-8">
-            {(['patient', 'clinic'] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setMode(m)}
-                className={cn(
-                  'flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-all',
-                  mode === m
-                    ? 'bg-white text-blue-700 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700',
-                )}
-              >
-                {m === 'patient'
-                  ? <User className="h-4 w-4" />
-                  : <Building2 className="h-4 w-4" />}
-                {m === 'patient' ? 'Patient' : 'Clinic Staff'}
-              </button>
-            ))}
           </div>
 
-          <motion.div
-            key={mode}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">
-              {mode === 'patient' ? 'Welcome back' : 'Staff login'}
-            </h1>
-            <p className="text-sm text-gray-500 mb-8">
-              {mode === 'patient'
-                ? 'Sign in to manage your health'
-                : 'Access your clinic portal'}
-            </p>
-          </motion.div>
+          <div className="flex items-center gap-2 mb-8">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100">
+              <Building2 className="h-4 w-4 text-blue-700" />
+            </div>
+            <span className="text-sm font-medium text-blue-700 bg-blue-50 rounded-md px-2 py-0.5">
+              Staff Portal
+            </span>
+          </div>
+
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">Sign in to your clinic</h1>
+          <p className="text-sm text-gray-500 mb-8">
+            Use your work email to access the clinic portal
+          </p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
             <Input
-              label="Email address"
+              label="Work email"
               type="email"
-              placeholder="you@example.com"
+              placeholder="doctor@clinic.com"
               error={errors.email?.message}
+              autoComplete="email"
               {...register('email')}
             />
 
@@ -126,6 +146,7 @@ export function LoginPage() {
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
                 error={errors.password?.message}
+                autoComplete="current-password"
                 {...register('password')}
               />
               <button
@@ -150,11 +171,11 @@ export function LoginPage() {
                   <div className="flex items-center gap-2 rounded-lg bg-blue-50 border border-blue-200 px-3 py-2">
                     <ShieldCheck className="h-4 w-4 text-blue-600 shrink-0" />
                     <p className="text-xs text-blue-700">
-                      Enter your authenticator code or a backup code to continue
+                      Two-factor authentication required
                     </p>
                   </div>
                   <Input
-                    label="6-digit authenticator code"
+                    label="Authenticator code"
                     placeholder="000000"
                     maxLength={6}
                     inputMode="numeric"
@@ -178,58 +199,22 @@ export function LoginPage() {
               </div>
             )}
 
-            <div className="flex items-center justify-end">
-              <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700">
-                Forgot password?
-              </Link>
-            </div>
-
             <Button
               type="submit"
               loading={isSubmitting}
               size="lg"
               className="w-full bg-blue-700 hover:bg-blue-800 focus-visible:ring-blue-500"
             >
-              {requires2FA ? 'Verify & sign in' : 'Sign in'}
+              Sign in to portal
             </Button>
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-500">
-            Don&apos;t have an account?{' '}
-            <Link to="/register" className="font-medium text-blue-600 hover:text-blue-700">
-              Create account
+            Not a clinic staff member?{' '}
+            <Link to="/login" className="font-medium text-blue-600 hover:text-blue-700">
+              Patient login
             </Link>
           </p>
-
-          {mode === 'clinic' && (
-            <p className="mt-2 text-center text-xs text-gray-400">
-              Admin portal?{' '}
-              <Link to="/clinic-login" className="text-blue-600 hover:text-blue-700">
-                Use clinic login
-              </Link>
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Right: branding panel */}
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-blue-700 via-blue-800 to-blue-950 items-center justify-center p-12">
-        <div className="text-white text-center max-w-sm">
-          <div className="w-24 h-24 rounded-3xl bg-white/10 backdrop-blur-sm flex items-center justify-center mx-auto mb-8 shadow-2xl">
-            <Activity className="h-12 w-12 text-white" />
-          </div>
-          <h2 className="text-3xl font-bold mb-4">Your health, simplified</h2>
-          <p className="text-blue-200 text-lg leading-relaxed">
-            AI-powered triage, clinic booking, and prescription management — all in one platform.
-          </p>
-          <div className="mt-10 grid grid-cols-3 gap-4">
-            {STATS.map((s) => (
-              <div key={s.label} className="rounded-xl bg-white/10 backdrop-blur-sm p-4">
-                <div className="text-xl font-bold">{s.value}</div>
-                <div className="text-xs text-blue-300 mt-0.5">{s.label}</div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     </div>

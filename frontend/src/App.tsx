@@ -5,6 +5,7 @@ import { NotificationToast } from './components/ui/NotificationToast'
 import { InstallPrompt } from './components/pwa/InstallPrompt'
 import { AppLayout } from './components/layout/AppLayout'
 import { ClinicLayout } from './components/clinic/ClinicLayout'
+import { AdminLayout } from './components/admin/AdminLayout'
 import { useAuthStore } from './store/auth'
 import { CLINIC_ROLES } from './types'
 
@@ -24,6 +25,16 @@ const NotificationsPage        = lazy(() => import('./pages/NotificationsPage').
 const SessionsPage             = lazy(() => import('./pages/SessionsPage').then(m => ({ default: m.SessionsPage })))
 const ForgotPasswordPage       = lazy(() => import('./pages/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })))
 const ClinicLoginPage          = lazy(() => import('./pages/ClinicLoginPage').then(m => ({ default: m.ClinicLoginPage })))
+
+// Admin pages
+const AdminOverviewPage        = lazy(() => import('./pages/admin/AdminOverviewPage').then(m => ({ default: m.AdminOverviewPage })))
+const AdminClinicsPage         = lazy(() => import('./pages/admin/AdminClinicsPage').then(m => ({ default: m.AdminClinicsPage })))
+const AdminUsersPage           = lazy(() => import('./pages/admin/AdminUsersPage').then(m => ({ default: m.AdminUsersPage })))
+const AdminAuditPage           = lazy(() => import('./pages/admin/AdminAuditPage').then(m => ({ default: m.AdminAuditPage })))
+const AdminTriagePage          = lazy(() => import('./pages/admin/AdminTriagePage').then(m => ({ default: m.AdminTriagePage })))
+const AdminSystemPage          = lazy(() => import('./pages/admin/AdminSystemPage').then(m => ({ default: m.AdminSystemPage })))
+const AdminFinancialPage       = lazy(() => import('./pages/admin/AdminFinancialPage').then(m => ({ default: m.AdminFinancialPage })))
+const AdminSettingsPage        = lazy(() => import('./pages/admin/AdminSettingsPage').then(m => ({ default: m.AdminSettingsPage })))
 
 // Clinic portal pages
 const ClinicOverviewPage       = lazy(() => import('./pages/clinic/ClinicOverviewPage').then(m => ({ default: m.ClinicOverviewPage })))
@@ -73,6 +84,13 @@ function ClinicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, user } = useAuthStore()
+  if (!isAuthenticated) return <Navigate to="/login" replace />
+  if (!user || user.role !== 'super_admin') return <Navigate to="/dashboard" replace />
+  return <>{children}</>
+}
+
 function PatientOrClinicRedirect() {
   const { user } = useAuthStore()
   if (user && CLINIC_ROLES.includes(user.role)) return <Navigate to="/clinic-dashboard" replace />
@@ -93,6 +111,18 @@ export default function App() {
           <Route path="/clinic-login"   element={<GuestRoute><ClinicLoginPage /></GuestRoute>} />
           <Route path="/register"       element={<GuestRoute><RegisterPage /></GuestRoute>} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+          {/* Super admin console — super_admin only */}
+          <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+            <Route index               element={<AdminOverviewPage />} />
+            <Route path="clinics"      element={<AdminClinicsPage />} />
+            <Route path="users"        element={<AdminUsersPage />} />
+            <Route path="audit"        element={<AdminAuditPage />} />
+            <Route path="triage"       element={<AdminTriagePage />} />
+            <Route path="system"       element={<AdminSystemPage />} />
+            <Route path="financial"    element={<AdminFinancialPage />} />
+            <Route path="settings"     element={<AdminSettingsPage />} />
+          </Route>
 
           {/* Clinic portal — all clinic staff roles */}
           <Route path="/clinic-dashboard" element={<ClinicRoute><ClinicLayout /></ClinicRoute>}>

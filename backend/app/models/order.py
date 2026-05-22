@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
+from enum import Enum
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import (
@@ -11,6 +12,29 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+
+class OrderStatus(str, Enum):
+    PENDING = "pending"
+    CONFIRMED = "confirmed"
+    PROCESSING = "processing"
+    READY = "ready"
+    OUT_FOR_DELIVERY = "out_for_delivery"
+    DELIVERED = "delivered"
+    CANCELLED = "cancelled"
+    REFUNDED = "refunded"
+
+
+class DeliveryMethod(str, Enum):
+    PICKUP = "pickup"
+    DELIVERY = "delivery"
+
+
+class PaymentMethod(str, Enum):
+    MPESA = "mpesa"
+    CASH = "cash"
+    CARD = "card"
+    INSURANCE = "insurance"
 
 if TYPE_CHECKING:
     from app.models.clinic import Clinic

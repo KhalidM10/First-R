@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_db, get_optional_user
-from app.models.triage import RecommendedAction, SeverityLevel, SymptomLog, TriageSession
+from app.models.triage import SymptomLog, TriageSession
 from app.models.user import User
 from app.schemas.triage import TriageAnalyzeRequest, TriageAnalyzeResponse
 from app.services.triage_engine import TriageEngine
@@ -14,16 +14,10 @@ from app.services.triage_engine import TriageEngine
 router = APIRouter()
 _engine = TriageEngine()
 
-_SEVERITY_MAP = {
-    "mild": SeverityLevel.MILD,
-    "moderate": SeverityLevel.MODERATE,
-    "urgent": SeverityLevel.URGENT,
-}
-
 _ACTION_MAP = {
-    "mild": RecommendedAction.REST_AT_HOME,
-    "moderate": RecommendedAction.VISIT_CLINIC,
-    "urgent": RecommendedAction.EMERGENCY,
+    "mild": "rest_at_home",
+    "moderate": "visit_clinic",
+    "urgent": "emergency",
 }
 
 
@@ -64,8 +58,8 @@ def analyze_symptoms(
     saved = False
     db_session_id = str(uuid.uuid4())  # fallback if DB save fails
     try:
-        severity_enum = _SEVERITY_MAP.get(result_dict["severity"], SeverityLevel.MILD)
-        action_enum = _ACTION_MAP.get(result_dict["severity"], RecommendedAction.REST_AT_HOME)
+        severity_str = result_dict["severity"]
+        action_str = _ACTION_MAP.get(severity_str, "rest_at_home")
 
         # Flatten recommendations to a list of strings for the JSONB column
         recs = result_dict["recommendations"]
@@ -80,11 +74,11 @@ def analyze_symptoms(
         session = TriageSession(
             user_id=current_user.id if current_user else None,
             symptoms=data.symptoms,
-            severity_level=severity_enum,
+            severity_level=severity_str,
             recommendations=rec_strings,
-            recommended_action=action_enum,
-            user_age=data.user_age,
-            user_gender=data.user_gender,
+            recommended_action=action_str,
+            patient_age=data.user_age,
+            patient_gender=data.user_gender,
             county=data.county,
             session_duration_seconds=elapsed,
         )

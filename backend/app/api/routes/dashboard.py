@@ -6,10 +6,11 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.deps import get_current_user, get_db, require_role
-from app.models.analytics import ClinicAnalytics
+from app.models.analytics import AnalyticsSnapshot
 from app.models.appointment import Appointment, AppointmentStatus
-from app.models.clinic import Clinic, Doctor
-from app.models.order import MedicineOrder, OrderStatus
+from app.models.clinic import Clinic
+from app.models.doctor import Doctor
+from app.models.order import Order, OrderStatus
 from app.models.triage import SymptomLog, TriageSession
 from app.models.user import User, UserRole
 
@@ -97,14 +98,14 @@ def clinic_stats(
 
     # Week revenue (Mon–Sun of current week)
     week_start = today - timedelta(days=today.weekday())
-    week_revenue = db.query(func.coalesce(func.sum(ClinicAnalytics.total_revenue_kes), 0)).filter(
-        ClinicAnalytics.clinic_id == clinic.id,
-        ClinicAnalytics.date >= week_start,
-        ClinicAnalytics.date <= today,
+    week_revenue = db.query(func.coalesce(func.sum(AnalyticsSnapshot.total_revenue_kes), 0)).filter(
+        AnalyticsSnapshot.clinic_id == clinic.id,
+        AnalyticsSnapshot.date >= week_start,
+        AnalyticsSnapshot.date <= today,
     ).scalar() or 0
 
-    pending_orders = db.query(func.count(MedicineOrder.id)).filter(
-        MedicineOrder.status == OrderStatus.PENDING
+    pending_orders = db.query(func.count(Order.id)).filter(
+        Order.status == OrderStatus.PENDING
     ).scalar() or 0
 
     completion_rate = round(completed / max(total, 1) * 100, 1)
@@ -145,16 +146,16 @@ def clinic_analytics(
         week_start = today - timedelta(weeks=w, days=today.weekday())
         week_end = week_start + timedelta(days=6)
 
-        real_appts = db.query(func.coalesce(func.sum(ClinicAnalytics.total_appointments), 0)).filter(
-            ClinicAnalytics.clinic_id == clinic.id,
-            ClinicAnalytics.date >= week_start,
-            ClinicAnalytics.date <= min(week_end, today),
+        real_appts = db.query(func.coalesce(func.sum(AnalyticsSnapshot.total_appointments), 0)).filter(
+            AnalyticsSnapshot.clinic_id == clinic.id,
+            AnalyticsSnapshot.date >= week_start,
+            AnalyticsSnapshot.date <= min(week_end, today),
         ).scalar() or 0
 
-        real_rev = db.query(func.coalesce(func.sum(ClinicAnalytics.total_revenue_kes), 0)).filter(
-            ClinicAnalytics.clinic_id == clinic.id,
-            ClinicAnalytics.date >= week_start,
-            ClinicAnalytics.date <= min(week_end, today),
+        real_rev = db.query(func.coalesce(func.sum(AnalyticsSnapshot.total_revenue_kes), 0)).filter(
+            AnalyticsSnapshot.clinic_id == clinic.id,
+            AnalyticsSnapshot.date >= week_start,
+            AnalyticsSnapshot.date <= min(week_end, today),
         ).scalar() or 0
 
         if real_appts > 0:
@@ -182,10 +183,10 @@ def clinic_analytics(
             next_ms = _subtract_months(today.replace(day=1), m - 1)
             month_end = next_ms - timedelta(days=1)
 
-        real_rev = db.query(func.coalesce(func.sum(ClinicAnalytics.total_revenue_kes), 0)).filter(
-            ClinicAnalytics.clinic_id == clinic.id,
-            ClinicAnalytics.date >= month_start,
-            ClinicAnalytics.date <= month_end,
+        real_rev = db.query(func.coalesce(func.sum(AnalyticsSnapshot.total_revenue_kes), 0)).filter(
+            AnalyticsSnapshot.clinic_id == clinic.id,
+            AnalyticsSnapshot.date >= month_start,
+            AnalyticsSnapshot.date <= month_end,
         ).scalar() or 0
 
         if real_rev > 0:
@@ -302,7 +303,7 @@ def dashboard_appointments(
             "patient_name": patient_name,
             "appointment_date": str(appt.appointment_date),
             "appointment_time": str(appt.appointment_time)[:5],
-            "status": appt.status.value,
+            "status": appt.status,
             "reason": appt.reason,
             "amount_kes": appt.amount_kes,
             "booking_reference": f"MA-{str(appt.id).upper().replace('-', '')[:8]}",
@@ -331,7 +332,7 @@ def update_appointment_status(
     except ValueError:
         raise HTTPException(status_code=400, detail=f"Invalid status: {new_status}")
     db.commit()
-    return {"id": str(appt.id), "status": appt.status.value}
+    return {"id": str(appt.id), "status": appt.status}
 
 
 # ── Doctors list ──────────────────────────────────────────────────────────────

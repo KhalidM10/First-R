@@ -1,8 +1,8 @@
 import uuid
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, field_validator
 
 from app.models.order import DeliveryMethod, OrderStatus, PaymentMethod
 
@@ -20,22 +20,27 @@ class ProductResponse(BaseModel):
     image_url: Optional[str] = None
     is_active: bool
 
-    @model_validator(mode="before")
     @classmethod
-    def enrich(cls, data: Any) -> Any:
-        if isinstance(data, dict):
-            return data
-        cols = [
-            "id", "clinic_id", "name", "category", "description",
-            "price_kes", "stock_quantity", "requires_prescription",
-            "image_url", "is_active",
-        ]
-        d = {c: getattr(data, c, None) for c in cols}
+    def model_validate(cls, obj: Any, **kw):  # type: ignore[override]
+        if isinstance(obj, dict):
+            return super().model_validate(obj, **kw)
+        d = {
+            "id": obj.id,
+            "clinic_id": obj.clinic_id,
+            "name": obj.name,
+            "category": obj.category,
+            "description": obj.description,
+            "price_kes": float(obj.price_kes),
+            "stock_quantity": obj.stock_quantity,
+            "requires_prescription": obj.requires_prescription,
+            "image_url": obj.image_url,
+            "is_active": obj.is_active,
+        }
         try:
-            d["clinic_name"] = data.clinic.name if data.clinic else None
+            d["clinic_name"] = obj.clinic.name if obj.clinic else None
         except Exception:
             d["clinic_name"] = None
-        return d
+        return super().model_validate(d, **kw)
 
     model_config = {"from_attributes": True}
 
@@ -66,52 +71,40 @@ class OrderCreate(BaseModel):
         return v
 
 
-class OrderItemResponse(BaseModel):
-    product_id: uuid.UUID
-    product_name: str
-    quantity: int
-    unit_price_kes: float
-    total_kes: float
-
-
 class OrderResponse(BaseModel):
     id: uuid.UUID
     patient_id: uuid.UUID
-    order_reference: str
-    items_detail: List[OrderItemResponse] = []
-    total_amount_kes: float
-    status: OrderStatus
-    delivery_method: DeliveryMethod
-    delivery_address: Optional[str] = None
-    payment_method: PaymentMethod
+    order_number: str
+    items: List[Dict[str, Any]] = []
+    subtotal_kes: float
+    delivery_fee_kes: float
+    total_kes: float
+    status: str
+    delivery_method: Optional[str] = None
+    delivery_address: Optional[Any] = None
+    payment_method: Optional[str] = None
     mpesa_transaction_id: Optional[str] = None
     created_at: datetime
 
-    @model_validator(mode="before")
     @classmethod
-    def enrich(cls, data: Any) -> Any:
-        if isinstance(data, dict):
-            return data
-        cols = [
-            "id", "patient_id", "total_amount_kes", "status",
-            "delivery_method", "delivery_address", "payment_method",
-            "mpesa_transaction_id", "created_at",
-        ]
-        d = {c: getattr(data, c, None) for c in cols}
-        d["order_reference"] = f"MO-{str(data.id).upper().replace('-', '')[:8]}"
-        try:
-            d["items_detail"] = [
-                {
-                    "product_id": oi.product_id,
-                    "product_name": oi.product.name if oi.product else "Unknown",
-                    "quantity": oi.quantity,
-                    "unit_price_kes": oi.unit_price_kes,
-                    "total_kes": oi.quantity * oi.unit_price_kes,
-                }
-                for oi in (data.order_items or [])
-            ]
-        except Exception:
-            d["items_detail"] = []
-        return d
+    def model_validate(cls, obj: Any, **kw):  # type: ignore[override]
+        if isinstance(obj, dict):
+            return super().model_validate(obj, **kw)
+        d = {
+            "id": obj.id,
+            "patient_id": obj.patient_id,
+            "order_number": obj.order_number,
+            "items": obj.items or [],
+            "subtotal_kes": float(obj.subtotal_kes),
+            "delivery_fee_kes": float(obj.delivery_fee_kes),
+            "total_kes": float(obj.total_kes),
+            "status": obj.status,
+            "delivery_method": obj.delivery_method,
+            "delivery_address": obj.delivery_address,
+            "payment_method": obj.payment_method,
+            "mpesa_transaction_id": obj.mpesa_transaction_id,
+            "created_at": obj.created_at,
+        }
+        return super().model_validate(d, **kw)
 
     model_config = {"from_attributes": True}

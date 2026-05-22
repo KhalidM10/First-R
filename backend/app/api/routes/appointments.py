@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.core.deps import get_current_user, get_db
 from app.models.appointment import Appointment, AppointmentStatus
-from app.models.clinic import Clinic, Doctor
+from app.models.clinic import Clinic
+from app.models.doctor import Doctor
 from app.models.user import User
 from app.schemas.appointment import AppointmentCreate, AppointmentResponse, AppointmentUpdate
 

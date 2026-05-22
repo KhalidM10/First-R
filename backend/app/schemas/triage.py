@@ -4,8 +4,6 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, field_validator
 
-from app.models.triage import RecommendedAction, SeverityLevel
-
 
 class SymptomLogCreate(BaseModel):
     symptom_name: str
@@ -43,9 +41,9 @@ class TriageSessionResponse(BaseModel):
     id: uuid.UUID
     user_id: Optional[uuid.UUID]
     symptoms: List[str]
-    severity_level: Optional[SeverityLevel]
+    severity_level: Optional[str]
     recommendations: List[str]
-    recommended_action: Optional[RecommendedAction]
+    recommended_action: Optional[str]
     user_age: Optional[int]
     user_gender: Optional[str]
     county: Optional[str]

@@ -27,6 +27,15 @@ VALID_ROLES = (
 )
 
 
+class UserRole:
+    SUPER_ADMIN = "super_admin"
+    CLINIC_ADMIN = "clinic_admin"
+    CLINIC_DOCTOR = "clinic_doctor"
+    CLINIC_RECEPTIONIST = "clinic_receptionist"
+    CLINIC_PHARMACIST = "clinic_pharmacist"
+    PATIENT = "patient"
+
+
 class User(Base):
     __tablename__ = "users"
     __table_args__ = (

@@ -31,6 +31,8 @@ class AuditLog(Base):
         Index("ix_audit_logs_resource_type", "resource_type"),
         Index("ix_audit_logs_created_at", "created_at"),
         Index("ix_audit_logs_request_id", "request_id"),
+        Index("ix_audit_logs_risk_score", "risk_score"),
+        Index("ix_audit_logs_status", "status"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -38,25 +40,36 @@ class AuditLog(Base):
     clinic_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("clinics.id", ondelete="SET NULL"), nullable=True)
     user_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
-    # Denormalised for audit permanence — don't rely on joins
+    # Denormalised — don't rely on joins (records must survive user/clinic deletion)
     user_email: Mapped[Optional[str]] = mapped_column(String(255))
     user_role: Mapped[Optional[str]] = mapped_column(String(50))
+    clinic_name: Mapped[Optional[str]] = mapped_column(String(255))
+    acting_as: Mapped[Optional[str]] = mapped_column(String(255))  # admin acting on behalf
 
+    # WHAT
     action: Mapped[str] = mapped_column(String(100), nullable=False)
     resource_type: Mapped[str] = mapped_column(String(100), nullable=False)
     resource_id: Mapped[Optional[str]] = mapped_column(String(255))
     old_values: Mapped[Optional[dict]] = mapped_column(JSONB)
     new_values: Mapped[Optional[dict]] = mapped_column(JSONB)
+    changed_fields: Mapped[Optional[List[str]]] = mapped_column(ARRAY(Text))
 
+    # WHERE
     ip_address: Mapped[str] = mapped_column(INET, nullable=False)
     user_agent: Mapped[Optional[str]] = mapped_column(Text)
     device_type: Mapped[Optional[str]] = mapped_column(String(50))
+    browser: Mapped[Optional[str]] = mapped_column(String(100))
+    os: Mapped[Optional[str]] = mapped_column(String(100))
     country: Mapped[Optional[str]] = mapped_column(String(100))
     city: Mapped[Optional[str]] = mapped_column(String(100))
 
+    # HOW
     request_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     session_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True))
+    api_endpoint: Mapped[Optional[str]] = mapped_column(Text)
+    http_method: Mapped[Optional[str]] = mapped_column(String(10))
 
+    # OUTCOME
     status: Mapped[str] = mapped_column(String(20), nullable=False)
     failure_reason: Mapped[Optional[str]] = mapped_column(Text)
     risk_score: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

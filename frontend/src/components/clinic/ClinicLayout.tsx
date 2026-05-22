@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Calendar, BarChart2, CreditCard,
-  ArrowLeft, LogOut, Users, Package,
+  ArrowLeft, LogOut, Users, Package, ShieldCheck,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useAuthStore } from '../../store/auth'
@@ -55,6 +55,12 @@ const CLINIC_NAV: ClinicNavItem[] = [
     label: 'Subscription',
     icon: CreditCard,
     roles: ['clinic_admin', 'super_admin'],
+  },
+  {
+    href: '/clinic-dashboard/audit',
+    label: 'Audit Logs',
+    icon: ShieldCheck,
+    permission: ['audit', 'read:own_clinic'],
   },
 ]
 

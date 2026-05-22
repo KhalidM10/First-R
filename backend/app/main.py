@@ -4,7 +4,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.api.routes import auth, triage, appointments, clinics, patients, orders, dashboard, permissions
+from app.api.routes import auth, triage, appointments, clinics, patients, orders, dashboard, permissions, audit
+from app.middleware.audit import AuditMiddleware
 
 settings = get_settings()
 
@@ -23,6 +24,7 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+app.add_middleware(AuditMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
@@ -40,6 +42,7 @@ app.include_router(patients.router,     prefix="/api/v1/patients",      tags=["p
 app.include_router(orders.router,       prefix="/api/v1/orders",        tags=["orders"])
 app.include_router(dashboard.router,    prefix="/api/v1/dashboard",     tags=["dashboard"])
 app.include_router(permissions.router,  prefix="/api/v1/permissions",   tags=["permissions"])
+app.include_router(audit.router,        prefix="/api/v1/audit-logs",    tags=["audit"])
 
 
 @app.get("/", tags=["health"])

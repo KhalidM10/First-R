@@ -17,6 +17,7 @@ import { ClinicOverviewPage }         from './pages/clinic/ClinicOverviewPage'
 import { ClinicAppointmentsPage }     from './pages/clinic/ClinicAppointmentsPage'
 import { ClinicAnalyticsPage }        from './pages/clinic/ClinicAnalyticsPage'
 import { ClinicSubscriptionPage }     from './pages/clinic/ClinicSubscriptionPage'
+import { ClinicAuditPage }           from './pages/clinic/ClinicAuditPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
@@ -78,6 +79,7 @@ export default function App() {
         <Route path="appointments"  element={<ClinicAppointmentsPage />} />
         <Route path="analytics"     element={<ClinicAnalyticsPage />} />
         <Route path="subscription"  element={<ClinicSubscriptionPage />} />
+        <Route path="audit"         element={<ClinicAuditPage />} />
       </Route>
 
       {/* Protected patient app shell */}

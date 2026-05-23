@@ -42,8 +42,8 @@ function EcgLoader({ count }: { count: number }) {
       </svg>
 
       <div className="text-center space-y-1">
-        <p className="text-base font-bold text-[#1a1a18]">Analysing your symptoms</p>
-        <p className="text-sm text-stone-400">
+        <p className="text-base font-bold" style={{ color: 'var(--color-text-primary)' }}>Analysing your symptoms</p>
+        <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
           Running {count} symptom{count !== 1 ? 's' : ''} through our triage engine…
         </p>
       </div>
@@ -77,17 +77,17 @@ function StepBar({ current }: { current: number }) {
                 className="h-6 w-6 rounded-full flex items-center justify-center text-[11px] font-black transition-all duration-300"
                 style={
                   done
-                    ? { backgroundColor: '#15803d', color: 'white' }
+                    ? { backgroundColor: 'var(--color-brand)', color: '#fff' }
                     : active
-                    ? { backgroundColor: '#15803d', color: 'white', boxShadow: '0 0 0 4px rgba(21,128,61,0.18)' }
-                    : { backgroundColor: '#e5e2dc', color: '#a8a29e' }
+                    ? { backgroundColor: 'var(--color-brand)', color: '#fff', boxShadow: '0 0 0 4px var(--color-brand-light)' }
+                    : { backgroundColor: 'var(--color-surface-3)', color: 'var(--color-text-tertiary)' }
                 }
               >
                 {done ? '✓' : i + 1}
               </div>
               <span
                 className="text-[10px] font-semibold uppercase tracking-wide whitespace-nowrap"
-                style={{ color: active ? '#15803d' : done ? '#15803d' : '#a8a29e' }}
+                style={{ color: active || done ? 'var(--color-brand)' : 'var(--color-text-tertiary)' }}
               >
                 {label}
               </span>
@@ -95,7 +95,7 @@ function StepBar({ current }: { current: number }) {
             {i < labels.length - 1 && (
               <div
                 className="flex-1 h-px mb-5 mx-1 transition-colors duration-500"
-                style={{ backgroundColor: i < current ? '#15803d' : '#e5e2dc' }}
+                style={{ backgroundColor: i < current ? 'var(--color-brand)' : 'var(--color-border)' }}
               />
             )}
           </div>
@@ -158,8 +158,8 @@ export function TriagePage() {
 
       {/* ── Header ──────────────────────────────────────────── */}
       <div className="animate-fade-in">
-        <h1 className="text-2xl font-extrabold text-[#1a1a18] tracking-tight">Symptom Check</h1>
-        <p className="text-sm text-stone-400 mt-1">
+        <h1 className="text-[22px] font-bold tracking-tight" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>Symptom Check</h1>
+        <p className="text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
           Describe what you feel — get triage guidance in under 2 minutes.
         </p>
       </div>
@@ -171,15 +171,15 @@ export function TriagePage() {
       {step === 'symptoms' && (
         <div
           key="symptoms"
-          className="rounded-2xl p-6 space-y-6 animate-slide-up"
+          className="card p-6 space-y-6 animate-slide-up"
           style={{ backgroundColor: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04)' }}
         >
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-1">
+            <p className="text-[11px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--color-text-tertiary)' }}>
               Step 1
             </p>
-            <h2 className="text-lg font-bold text-[#1a1a18]">What's bothering you today?</h2>
-            <p className="text-sm text-stone-400 mt-1">
+            <h2 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>What's bothering you today?</h2>
+            <p className="text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
               Pick from the list or describe it in your own words.
             </p>
           </div>
@@ -190,7 +190,7 @@ export function TriagePage() {
             onClick={() => setStep('details')}
             disabled={symptoms.length === 0}
             className="w-full font-bold py-3.5 rounded-xl text-sm text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90"
-            style={{ backgroundColor: '#15803d' }}
+            style={{ backgroundColor: 'var(--color-brand)' }}
           >
             Continue
             {symptoms.length > 0 && ` — ${symptoms.length} symptom${symptoms.length > 1 ? 's' : ''} selected`}
@@ -213,11 +213,11 @@ export function TriagePage() {
               <ChevronLeft className="h-5 w-5" />
             </button>
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-1">
+              <p className="text-[11px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--color-text-tertiary)' }}>
                 Step 2
               </p>
-              <h2 className="text-lg font-bold text-[#1a1a18]">A bit about you</h2>
-              <p className="text-sm text-stone-400 mt-1">
+              <h2 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>A bit about you</h2>
+              <p className="text-sm mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
                 All optional — but helps us give more accurate guidance.
               </p>
             </div>
@@ -226,7 +226,7 @@ export function TriagePage() {
           {error && (
             <div
               className="rounded-xl px-4 py-3 text-sm font-medium"
-              style={{ backgroundColor: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca' }}
+              style={{ backgroundColor: 'var(--color-danger-light)', color: 'var(--color-danger)', border: '1px solid var(--color-danger-light)' }}
             >
               {error}
             </div>
@@ -237,7 +237,7 @@ export function TriagePage() {
           <button
             onClick={runAnalysis}
             className="w-full font-bold py-3.5 rounded-xl text-sm text-white transition-all hover:opacity-90"
-            style={{ backgroundColor: '#15803d' }}
+            style={{ backgroundColor: 'var(--color-brand)' }}
           >
             Analyse my symptoms
           </button>
@@ -248,7 +248,7 @@ export function TriagePage() {
       {step === 'loading' && (
         <div
           key="loading"
-          className="rounded-2xl animate-fade-in"
+          className="card animate-fade-in"
           style={{ backgroundColor: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04)' }}
         >
           <EcgLoader count={symptoms.length} />
@@ -262,7 +262,7 @@ export function TriagePage() {
 
       {/* ── Footer disclaimer ───────────────────────────────── */}
       {step !== 'results' && step !== 'loading' && (
-        <p className="text-[11px] text-stone-400 text-center leading-relaxed">
+        <p className="text-[11px] text-center leading-relaxed" style={{ color: 'var(--color-text-tertiary)' }}>
           MedAssist AI is a triage guidance tool only — not a diagnostic service.
           Always consult a qualified healthcare professional.
         </p>

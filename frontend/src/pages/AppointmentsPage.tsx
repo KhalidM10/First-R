@@ -13,10 +13,10 @@ import type { Appointment } from '../types'
 type Filter = 'upcoming' | 'past' | 'cancelled'
 
 const STATUS_CFG: Record<string, { label: string; bg: string; text: string }> = {
-  pending:   { label: 'Pending',   bg: '#FFFBEB', text: '#B45309' },
-  confirmed: { label: 'Confirmed', bg: '#F0FDF4', text: '#15803D' },
-  completed: { label: 'Completed', bg: '#F4F3EF', text: '#78716C' },
-  cancelled: { label: 'Cancelled', bg: '#FEF2F2', text: '#DC2626' },
+  pending:   { label: 'Pending',   bg: 'var(--color-warning-light)', text: 'var(--color-warning)' },
+  confirmed: { label: 'Confirmed', bg: 'var(--color-success-light)', text: 'var(--color-success)' },
+  completed: { label: 'Completed', bg: 'var(--color-surface-2)',     text: 'var(--color-text-tertiary)' },
+  cancelled: { label: 'Cancelled', bg: 'var(--color-danger-light)',  text: 'var(--color-danger)' },
 }
 
 function AppointmentCard({ appt, showCancel, showReview }: { appt: Appointment; showCancel: boolean; showReview?: boolean }) {
@@ -41,17 +41,17 @@ function AppointmentCard({ appt, showCancel, showReview }: { appt: Appointment; 
   const timeStr = appt.appointment_time?.substring(0, 5) ?? '—'
 
   return (
-    <div className="bg-white rounded-xl p-5 border border-slate-200/80 transition-all hover:border-slate-300 hover:shadow-sm">
+    <div className="card p-5 transition-all hover:shadow-md">
       {/* Date + time + status */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div>
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-blue-500" />
-            <span className="text-sm font-bold text-gray-900">{dateStr}</span>
+            <Calendar className="h-4 w-4" style={{ color: 'var(--color-brand)' }} />
+            <span className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>{dateStr}</span>
           </div>
           <div className="flex items-center gap-2 mt-0.5">
-            <Clock className="h-3.5 w-3.5 text-gray-400" />
-            <span className="text-sm text-gray-500 font-medium">{timeStr}</span>
+            <Clock className="h-3.5 w-3.5" style={{ color: 'var(--color-text-tertiary)' }} />
+            <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>{timeStr}</span>
           </div>
         </div>
         <span
@@ -66,33 +66,33 @@ function AppointmentCard({ appt, showCancel, showReview }: { appt: Appointment; 
       <div className="space-y-1 mb-3">
         {appt.doctor_name && (
           <div className="flex items-center gap-2">
-            <Stethoscope className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-            <span className="text-sm font-semibold text-gray-800">{appt.doctor_name}</span>
+            <Stethoscope className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--color-text-tertiary)' }} />
+            <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{appt.doctor_name}</span>
           </div>
         )}
         {appt.clinic_name && (
           <div className="flex items-center gap-2">
-            <MapPin className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-            <span className="text-sm text-gray-500">{appt.clinic_name}</span>
+            <MapPin className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--color-text-tertiary)' }} />
+            <span className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{appt.clinic_name}</span>
           </div>
         )}
       </div>
 
       {/* Reason */}
       {appt.reason && (
-        <p className="text-xs text-gray-400 mb-3 leading-relaxed border-l-2 border-gray-100 pl-2">
+        <p className="text-xs mb-3 leading-relaxed pl-2" style={{ color: 'var(--color-text-tertiary)', borderLeft: '2px solid var(--color-border)' }}>
           {appt.reason}
         </p>
       )}
 
       {/* Reference + fee */}
-      <div className="flex items-center justify-between pt-3 border-t border-gray-50">
+      <div className="flex items-center justify-between pt-3" style={{ borderTop: '1px solid var(--color-border)' }}>
         <div>
-          <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">Ref</p>
-          <p className="text-xs font-bold text-gray-700">{appt.booking_reference}</p>
+          <p className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: 'var(--color-text-tertiary)' }}>Ref</p>
+          <p className="text-xs font-bold" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-mono)' }}>{appt.booking_reference}</p>
         </div>
         {appt.amount_kes > 0 && (
-          <p className="text-xs font-semibold text-gray-500">
+          <p className="text-xs font-semibold" style={{ color: 'var(--color-text-secondary)' }}>
             KES {appt.amount_kes.toLocaleString()}
           </p>
         )}
@@ -100,7 +100,7 @@ function AppointmentCard({ appt, showCancel, showReview }: { appt: Appointment; 
 
       {/* Actions */}
       {(showCancel || showReview || appt.status === 'cancelled') && (
-        <div className="flex gap-2 mt-3 pt-3 border-t border-gray-50">
+        <div className="flex gap-2 mt-3 pt-3" style={{ borderTop: '1px solid var(--color-border)' }}>
           {showCancel && appt.status !== 'cancelled' && (
             <button
               onClick={() => {
@@ -154,7 +154,7 @@ function EmptyState({ filter }: { filter: Filter }) {
         <button
           onClick={() => navigate('/clinics')}
           className="mt-5 flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white"
-          style={{ backgroundColor: '#1E40AF' }}
+          style={{ backgroundColor: 'var(--color-brand)' }}
         >
           <CalendarPlus className="h-4 w-4" /> Find a clinic
         </button>
@@ -186,15 +186,15 @@ export function AppointmentsPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">My Appointments</h1>
-          <p className="text-sm text-gray-400 mt-0.5">
+          <h1 className="text-[22px] font-bold tracking-tight" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>My Appointments</h1>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
             {isLoading ? 'Loading…' : `${appointments.length} appointment${appointments.length !== 1 ? 's' : ''}`}
           </p>
         </div>
         <button
           onClick={() => navigate('/clinics')}
           className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white transition-all hover:opacity-90"
-          style={{ backgroundColor: '#1E40AF' }}
+          style={{ backgroundColor: 'var(--color-brand)' }}
         >
           <CalendarPlus className="h-4 w-4" /> Book new
         </button>

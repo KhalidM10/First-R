@@ -49,10 +49,16 @@ interface DashboardAppointment {
 }
 
 const STATUS_CHIP: Record<string, { bg: string; text: string; label: string }> = {
-  pending:   { bg: '#FEF3C7', text: '#92400E', label: 'Pending' },
-  confirmed: { bg: '#DBEAFE', text: '#1E40AF', label: 'Confirmed' },
-  completed: { bg: '#D1FAE5', text: '#065F46', label: 'Completed' },
-  cancelled: { bg: '#F3F4F6', text: '#6B7280', label: 'Cancelled' },
+  pending:   { bg: 'var(--color-warning-light)', text: 'var(--color-warning)', label: 'Pending' },
+  confirmed: { bg: 'var(--color-brand-light)',   text: 'var(--color-brand)',   label: 'Confirmed' },
+  completed: { bg: 'var(--color-success-light)', text: 'var(--color-success)', label: 'Completed' },
+  cancelled: { bg: 'var(--color-surface-2)',     text: 'var(--color-text-tertiary)', label: 'Cancelled' },
+}
+
+const VARIANT = {
+  brand:   { icon: 'var(--color-brand)',   bg: 'var(--color-brand-light)' },
+  warning: { icon: 'var(--color-warning)', bg: 'var(--color-warning-light)' },
+  success: { icon: 'var(--color-success)', bg: 'var(--color-success-light)' },
 }
 
 const METRICS = (s: ClinicStats) => [
@@ -61,32 +67,28 @@ const METRICS = (s: ClinicStats) => [
     value: s.appointments_today,
     sub: `${s.pending + s.confirmed} remaining`,
     icon: Calendar,
-    color: '#2563EB',
-    bg: '#EFF6FF',
+    variant: VARIANT.brand,
   },
   {
     label: 'Pending confirmation',
     value: s.pending,
     sub: `${s.confirmed} confirmed`,
     icon: Clock,
-    color: '#D97706',
-    bg: '#FFFBEB',
+    variant: VARIANT.warning,
   },
   {
     label: 'Week revenue',
     value: formatKES(s.week_revenue_kes),
     sub: `${formatKES(s.total_revenue_kes)} total`,
     icon: TrendingUp,
-    color: '#059669',
-    bg: '#F0FDF4',
+    variant: VARIANT.success,
   },
   {
     label: 'Completion rate',
     value: `${s.completion_rate}%`,
     sub: `${s.completed} of ${s.total_appointments} total`,
     icon: CheckCircle2,
-    color: '#7C3AED',
-    bg: '#F5F3FF',
+    variant: VARIANT.brand,
   },
 ]
 
@@ -128,10 +130,13 @@ export function ClinicOverviewPage() {
 
       {/* Header */}
       <div>
-        <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">
+        <h1
+          className="text-[22px] font-bold tracking-tight"
+          style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}
+        >
           {stats?.clinic_name ?? 'Clinic Dashboard'}
         </h1>
-        <p className="text-[13px] text-slate-400 mt-0.5">
+        <p className="text-[13px] mt-0.5" style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}>
           {new Date().toLocaleDateString('en-KE', {
             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
           })}
@@ -142,40 +147,47 @@ export function ClinicOverviewPage() {
       {/* Metrics strip */}
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {METRICS(stats).map(({ label, value, sub, icon: Icon, color, bg }) => (
-            <div key={label} className="bg-white rounded-xl border border-slate-200/80 p-4">
+          {METRICS(stats).map(({ label, value, sub, icon: Icon, variant }) => (
+            <div key={label} className="card p-4">
               <div
                 className="h-8 w-8 rounded-lg flex items-center justify-center mb-3"
-                style={{ background: bg }}
+                style={{ background: variant.bg }}
               >
-                <Icon className="h-4 w-4" style={{ color }} />
+                <Icon className="h-4 w-4" style={{ color: variant.icon }} />
               </div>
-              <p className="text-[22px] font-bold text-slate-900 tracking-tight tabular-nums leading-none">
+              <p
+                className="text-[22px] font-bold tracking-tight tabular-nums leading-none"
+                style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}
+              >
                 {value}
               </p>
-              <p className="text-[12px] text-slate-500 font-medium mt-1 leading-snug">{label}</p>
-              {sub && <p className="text-[11px] text-slate-400 mt-0.5">{sub}</p>}
+              <p className="text-[12px] font-medium mt-1 leading-snug" style={{ color: 'var(--color-text-secondary)' }}>{label}</p>
+              {sub && <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>{sub}</p>}
             </div>
           ))}
         </div>
       )}
 
       {/* Today's schedule — primary ops view */}
-      <div className="bg-white rounded-xl border border-slate-200/80">
+      <div className="card">
         <div
           className="flex items-center justify-between px-5 py-4"
-          style={{ borderBottom: '1px solid #F1F5F9' }}
+          style={{ borderBottom: '1px solid var(--color-border)' }}
         >
           <div className="flex items-center gap-2.5">
-            <Calendar className="h-4 w-4 text-blue-500" />
-            <p className="text-[14px] font-bold text-slate-900">Today's Schedule</p>
-            <span className="text-[11px] font-semibold text-slate-400 bg-slate-100 rounded-full px-2 py-0.5">
+            <Calendar className="h-4 w-4" style={{ color: 'var(--color-brand)' }} />
+            <p className="text-[14px] font-semibold" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}>Today's Schedule</p>
+            <span
+              className="text-[11px] font-semibold rounded-full px-2 py-0.5"
+              style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-surface-2)' }}
+            >
               {todayAppts?.length ?? 0}
             </span>
           </div>
           <Link
             to="/clinic-dashboard/appointments"
-            className="flex items-center gap-1 text-[12px] font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+            className="flex items-center gap-1 text-[12px] font-semibold transition-colors"
+            style={{ color: 'var(--color-brand)' }}
           >
             Manage all <ChevronRight className="h-3.5 w-3.5" />
           </Link>
@@ -183,45 +195,48 @@ export function ClinicOverviewPage() {
 
         {!todayAppts || todayAppts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-14 text-center">
-            <div className="h-12 w-12 rounded-2xl bg-slate-100 flex items-center justify-center mb-3">
-              <Calendar className="h-6 w-6 text-slate-300" />
+            <div className="h-12 w-12 rounded-xl flex items-center justify-center mb-3" style={{ background: 'var(--color-surface-2)' }}>
+              <Calendar className="h-6 w-6" style={{ color: 'var(--color-text-tertiary)' }} />
             </div>
-            <p className="text-[13px] font-semibold text-slate-500">No appointments today</p>
-            <p className="text-[12px] text-slate-400 mt-1">
+            <p className="text-[13px] font-semibold" style={{ color: 'var(--color-text-secondary)' }}>No appointments today</p>
+            <p className="text-[12px] mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
               Enjoy the quiet — or check tomorrow's schedule
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-50">
+          <div>
             {todayAppts.map(appt => {
               const chip = STATUS_CHIP[appt.status] ?? STATUS_CHIP.pending
               return (
                 <div
                   key={appt.id}
-                  className="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50/60 transition-colors"
+                  className="flex items-center gap-4 px-5 py-3.5 transition-colors"
+                  style={{ borderBottom: '1px solid var(--color-border)' }}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--color-surface-2)')}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
                   <div className="w-12 shrink-0">
-                    <p className="text-[13px] font-bold text-slate-900 tabular-nums">
+                    <p className="text-[13px] font-bold tabular-nums" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-mono)' }}>
                       {appt.appointment_time?.substring(0, 5)}
                     </p>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-slate-900 truncate">
+                    <p className="text-[13px] font-semibold truncate" style={{ color: 'var(--color-text-primary)' }}>
                       {appt.patient_name}
                     </p>
-                    <p className="text-[11px] text-slate-400 truncate">
+                    <p className="text-[11px] truncate" style={{ color: 'var(--color-text-tertiary)' }}>
                       {appt.doctor_name ?? 'Unassigned'}
                       {appt.reason ? ` · ${appt.reason}` : ''}
                     </p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     {appt.amount_kes > 0 && (
-                      <span className="text-[12px] font-medium text-slate-400 hidden sm:block">
+                      <span className="text-[12px] font-medium hidden sm:block" style={{ color: 'var(--color-text-tertiary)' }}>
                         {formatKES(appt.amount_kes)}
                       </span>
                     )}
                     <span
-                      className="text-[11px] font-bold px-2.5 py-1 rounded-full"
+                      className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
                       style={{ backgroundColor: chip.bg, color: chip.text }}
                     >
                       {chip.label}
@@ -236,10 +251,10 @@ export function ClinicOverviewPage() {
         {stats && stats.pending > 0 && (
           <div
             className="flex items-center gap-2 px-5 py-3"
-            style={{ borderTop: '1px solid #F1F5F9' }}
+            style={{ borderTop: '1px solid var(--color-border)' }}
           >
-            <AlertCircle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-            <p className="text-[12px] text-amber-700">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--color-warning)' }} />
+            <p className="text-[12px]" style={{ color: 'var(--color-warning)' }}>
               {stats.pending} appointment{stats.pending !== 1 ? 's' : ''} awaiting confirmation
             </p>
           </div>
@@ -248,15 +263,16 @@ export function ClinicOverviewPage() {
 
       {/* Trend chart */}
       {trendData.length > 0 && (
-        <div className="bg-white rounded-xl border border-slate-200/80 p-5">
+        <div className="card p-5">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <p className="text-[14px] font-bold text-slate-900">Appointment Trend</p>
-              <p className="text-[12px] text-slate-400 mt-0.5">Last 8 weeks</p>
+              <p className="text-[14px] font-semibold" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}>Appointment Trend</p>
+              <p className="text-[12px] mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>Last 8 weeks</p>
             </div>
             <Link
               to="/clinic-dashboard/analytics"
-              className="text-[12px] font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+              className="text-[12px] font-semibold transition-colors"
+              style={{ color: 'var(--color-brand)' }}
             >
               Full analytics
             </Link>
@@ -265,38 +281,38 @@ export function ClinicOverviewPage() {
             <AreaChart data={trendData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
               <defs>
                 <linearGradient id="apptGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#2563EB" stopOpacity={0.12} />
-                  <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#1D4ED8" stopOpacity={0.12} />
+                  <stop offset="95%" stopColor="#1D4ED8" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
               <XAxis
                 dataKey="label"
-                tick={{ fontSize: 11, fill: '#94A3B8' }}
+                tick={{ fontSize: 11, fill: '#9CA3AF' }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
-                tick={{ fontSize: 11, fill: '#CBD5E1' }}
+                tick={{ fontSize: 11, fill: '#D1D5DB' }}
                 axisLine={false}
                 tickLine={false}
               />
               <Tooltip
                 contentStyle={{
-                  borderRadius: '10px',
-                  border: '1px solid #E2E8F0',
+                  borderRadius: '8px',
+                  border: '1px solid #E5E7EB',
                   fontSize: '12px',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+                  fontFamily: 'Inter, sans-serif',
                 }}
               />
               <Area
                 type="monotone"
                 dataKey="appointments"
-                stroke="#2563EB"
+                stroke="#1D4ED8"
                 strokeWidth={2}
                 fill="url(#apptGrad)"
                 dot={false}
-                activeDot={{ r: 4, fill: '#2563EB' }}
+                activeDot={{ r: 4, fill: '#1D4ED8' }}
               />
             </AreaChart>
           </ResponsiveContainer>

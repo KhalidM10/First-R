@@ -30,13 +30,13 @@ function categoryFromType(type: string): NotifCategory {
 }
 
 function iconFromType(type: string): { icon: React.ElementType; bg: string; color: string } {
-  if (type.includes('confirmed'))  return { icon: Calendar,     bg: '#DBEAFE', color: '#1E40AF' }
-  if (type.includes('cancelled'))  return { icon: Calendar,     bg: '#FEF2F2', color: '#DC2626' }
-  if (type.includes('completed'))  return { icon: CheckCircle2, bg: '#F0FDF4', color: '#059669' }
-  if (type.includes('appointment')) return { icon: Calendar,    bg: '#EFF6FF', color: '#1E40AF' }
-  if (type.includes('order'))      return { icon: Package,      bg: '#FFFBEB', color: '#B45309' }
-  if (type.includes('health'))     return { icon: Activity,     bg: '#F0FDF4', color: '#059669' }
-  return { icon: Bell, bg: '#F8FAFC', color: '#64748B' }
+  if (type.includes('confirmed'))   return { icon: Calendar,     bg: 'var(--color-brand-light)',   color: 'var(--color-brand)' }
+  if (type.includes('cancelled'))   return { icon: Calendar,     bg: 'var(--color-danger-light)',  color: 'var(--color-danger)' }
+  if (type.includes('completed'))   return { icon: CheckCircle2, bg: 'var(--color-success-light)', color: 'var(--color-success)' }
+  if (type.includes('appointment')) return { icon: Calendar,     bg: 'var(--color-brand-light)',   color: 'var(--color-brand)' }
+  if (type.includes('order'))       return { icon: Package,      bg: 'var(--color-warning-light)', color: 'var(--color-warning)' }
+  if (type.includes('health'))      return { icon: Activity,     bg: 'var(--color-success-light)', color: 'var(--color-success)' }
+  return { icon: Bell, bg: 'var(--color-surface-2)', color: 'var(--color-text-tertiary)' }
 }
 
 // ── Static health tip (seeded daily) ─────────────────────────────────────────
@@ -77,7 +77,9 @@ function NotifCard({
   return (
     <button
       onClick={handleClick}
-      className="w-full flex items-start gap-4 text-left transition-colors hover:bg-gray-50 rounded-2xl p-4"
+      className="w-full flex items-start gap-4 text-left transition-colors rounded-xl p-4"
+      onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--color-surface-2)')}
+      onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
     >
       <div
         className="h-10 w-10 shrink-0 rounded-xl flex items-center justify-center mt-0.5"
@@ -88,17 +90,23 @@ function NotifCard({
 
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
-          <p className={`text-sm ${notif.is_read ? 'font-medium text-gray-700' : 'font-bold text-gray-900'}`}>
+          <p
+            className="text-sm"
+            style={{
+              fontWeight: notif.is_read ? 500 : 700,
+              color: notif.is_read ? 'var(--color-text-secondary)' : 'var(--color-text-primary)',
+            }}
+          >
             {notif.title}
           </p>
           {!notif.is_read && (
-            <span className="shrink-0 h-2 w-2 rounded-full mt-1.5 bg-blue-600" />
+            <span className="shrink-0 h-2 w-2 rounded-full mt-1.5" style={{ backgroundColor: 'var(--color-brand)' }} />
           )}
         </div>
-        <p className="text-xs text-gray-500 mt-0.5 leading-relaxed line-clamp-2">{notif.body}</p>
+        <p className="text-xs mt-0.5 leading-relaxed line-clamp-2" style={{ color: 'var(--color-text-secondary)' }}>{notif.body}</p>
         <div className="flex items-center gap-1 mt-1.5">
-          <Clock className="h-3 w-3 text-gray-300" />
-          <span className="text-[10px] text-gray-400">
+          <Clock className="h-3 w-3" style={{ color: 'var(--color-border-strong)' }} />
+          <span className="text-[10px]" style={{ color: 'var(--color-text-tertiary)' }}>
             {formatDistanceToNow(parseISO(notif.created_at), { addSuffix: true })}
           </span>
         </div>
@@ -168,8 +176,8 @@ export function NotificationsPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Notifications</h1>
-          <p className="text-sm text-gray-400 mt-0.5">
+          <h1 className="text-[22px] font-bold tracking-tight" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}>Notifications</h1>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
             {liveUnread > 0 ? `${liveUnread} unread` : 'All caught up'}
           </p>
         </div>
@@ -198,8 +206,8 @@ export function NotificationsPage() {
               className="flex items-center gap-1.5 shrink-0 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all"
               style={
                 category === tab.key
-                  ? { backgroundColor: '#1E40AF', color: 'white' }
-                  : { backgroundColor: 'white', color: '#6B7280', border: '1px solid #E5E7EB' }
+                  ? { backgroundColor: 'var(--color-brand)', color: '#fff' }
+                  : { backgroundColor: 'var(--color-surface)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }
               }
             >
               <tab.icon className="h-3.5 w-3.5" />
@@ -210,7 +218,7 @@ export function NotificationsPage() {
                   style={
                     category === tab.key
                       ? { backgroundColor: 'rgba(255,255,255,0.25)', color: 'white' }
-                      : { backgroundColor: '#EFF6FF', color: '#1E40AF' }
+                      : { backgroundColor: 'var(--color-brand-light)', color: 'var(--color-brand)' }
                   }
                 >
                   {count}
@@ -222,7 +230,7 @@ export function NotificationsPage() {
       </div>
 
       {/* List */}
-      <div className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+      <div className="card overflow-hidden">
         {isLoading ? (
           <div className="p-4 space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (

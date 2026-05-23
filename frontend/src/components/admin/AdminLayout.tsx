@@ -127,11 +127,11 @@ export function AdminLayout() {
             </div>
           )}
 
-          {/* Collapse toggle — visible on sidebar hover */}
+          {/* Collapse toggle — anchored to right edge so it's reachable when collapsed */}
           <button
             onClick={() => setCollapsed(v => !v)}
             className={cn(
-              'ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-all duration-150',
+              'absolute right-2 top-1/2 -translate-y-1/2 flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-all duration-150',
               'opacity-0 group-hover/sidebar:opacity-100',
             )}
             style={{ color: 'var(--sidebar-text)' }}

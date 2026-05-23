@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { differenceInDays, differenceInHours, format, isAfter, parseISO, startOfDay } from 'date-fns'
+import { differenceInDays, differenceInHours, format, parseISO, startOfDay } from 'date-fns'
 import {
-  Activity, ArrowUpRight, Bell, Calendar, CheckCircle2,
-  ChevronRight, Clock, MapPin, Package, Pill, Stethoscope,
+  Activity, ArrowRight, Calendar, CheckCircle2,
+  Clock, MapPin, Package, Pill, Stethoscope,
+  TrendingUp, ChevronRight,
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
@@ -16,173 +17,83 @@ function getGreeting() {
   return 'Good evening'
 }
 
-function countdown(dateStr: string, timeStr: string): string {
+function countdown(dateStr: string, timeStr: string) {
   try {
     const dt = parseISO(`${dateStr}T${timeStr}`)
     const hrs = differenceInHours(dt, new Date())
-    if (hrs < 0) return 'Past'
-    if (hrs < 24) return `In ${hrs}h`
+    if (hrs < 0) return null
+    if (hrs < 24) return { label: `${hrs}h away`, urgent: hrs < 4 }
     const days = differenceInDays(dt, startOfDay(new Date()))
-    return `In ${days} day${days !== 1 ? 's' : ''}`
-  } catch {
-    return ''
-  }
+    return { label: `${days} day${days !== 1 ? 's' : ''} away`, urgent: false }
+  } catch { return null }
 }
 
 const ORDER_STEPS = ['Pending', 'Processing', 'Ready', 'Delivered']
-const ORDER_STEP_IDX: Record<string, number> = {
-  pending: 0, processing: 1, ready: 2, delivered: 3,
-}
+const ORDER_STEP_IDX: Record<string, number> = { pending: 0, processing: 1, ready: 2, delivered: 3 }
 
 function OrderProgress({ status }: { status: string }) {
   const idx = ORDER_STEP_IDX[status] ?? 0
-  const pct = ((idx) / (ORDER_STEPS.length - 1)) * 100
   return (
-    <div className="space-y-2">
-      <div className="flex justify-between text-[10px] font-semibold text-gray-400">
+    <div className="space-y-2.5">
+      <div className="flex justify-between">
         {ORDER_STEPS.map((s, i) => (
-          <span key={s} style={{ color: i <= idx ? '#1E40AF' : undefined }}>{s}</span>
+          <span key={s} className={`text-[11px] font-medium ${i <= idx ? 'text-blue-600' : 'text-slate-400'}`}>{s}</span>
         ))}
       </div>
-      <div className="h-1.5 rounded-full bg-gray-100">
+      <div className="h-1 rounded-full bg-slate-100 overflow-hidden">
         <div
-          className="h-full rounded-full transition-all duration-700"
-          style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #1E40AF, #3B82F6)' }}
+          className="h-full rounded-full bg-blue-600 transition-all duration-700"
+          style={{ width: `${(idx / (ORDER_STEPS.length - 1)) * 100}%` }}
         />
       </div>
     </div>
   )
 }
 
-function UpcomingAppointmentCard({ appt }: { appt: Appointment }) {
-  const countdownStr = countdown(appt.appointment_date, appt.appointment_time)
-  const dateStr = format(parseISO(appt.appointment_date), 'EEE, d MMM yyyy')
-  const timeStr = appt.appointment_time?.substring(0, 5) ?? '—'
-
+function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <div
-      className="bg-white rounded-2xl p-5 border border-blue-100"
-      style={{ boxShadow: '0 1px 3px rgba(30,64,175,0.08), 0 4px 16px rgba(30,64,175,0.06)' }}
-    >
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-1">Next Appointment</p>
-          <h3 className="text-sm font-bold text-gray-900">
-            {appt.doctor_name ?? 'Doctor TBD'}
-          </h3>
-          {appt.clinic_name && (
-            <p className="text-xs text-gray-500 mt-0.5">{appt.clinic_name}</p>
-          )}
-        </div>
-        {countdownStr && (
-          <span
-            className="shrink-0 text-xs font-bold rounded-full px-2.5 py-1"
-            style={{ backgroundColor: '#EFF6FF', color: '#1E40AF' }}
-          >
-            {countdownStr}
-          </span>
-        )}
-      </div>
-
-      <div className="flex items-center gap-4 mb-4">
-        <div className="flex items-center gap-1.5 text-xs text-gray-600">
-          <Calendar className="h-3.5 w-3.5 text-blue-400" />
-          {dateStr}
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-gray-600">
-          <Clock className="h-3.5 w-3.5 text-blue-400" />
-          {timeStr}
-        </div>
-      </div>
-
-      <div className="flex gap-2">
-        <a
-          href={`https://maps.google.com/?q=${encodeURIComponent(appt.clinic_name ?? '')}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-        >
-          <MapPin className="h-3.5 w-3.5" /> Get Directions
-        </a>
-        <Link
-          to="/appointments"
-          className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold text-white transition-all hover:opacity-90"
-          style={{ backgroundColor: '#1E40AF' }}
-        >
-          <Calendar className="h-3.5 w-3.5" /> View Details
-        </Link>
-      </div>
+    <div className={`bg-white rounded-xl border border-slate-200/80 ${className}`}>
+      {children}
     </div>
   )
 }
 
-function ActiveOrderCard({ order }: { order: MedOrder }) {
-  const items = (order as any).items ?? []
-  const itemCount = Array.isArray(items) ? items.length : 0
-  return (
-    <div
-      className="bg-white rounded-2xl p-5 border border-purple-100"
-      style={{ boxShadow: '0 1px 3px rgba(124,58,237,0.08), 0 4px 16px rgba(124,58,237,0.06)' }}
-    >
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-purple-400 mb-1">Active Order</p>
-          <p className="text-sm font-bold text-gray-900">
-            {(order as any).order_number ?? (order as any).order_reference ?? 'Order'}
-          </p>
-          <p className="text-xs text-gray-500 mt-0.5">
-            {itemCount} item{itemCount !== 1 ? 's' : ''}
-          </p>
-        </div>
-        <div className="h-9 w-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#F5F3FF' }}>
-          <Package className="h-4.5 w-4.5 text-purple-600" />
-        </div>
-      </div>
-      <OrderProgress status={(order as any).status ?? 'pending'} />
-      <div className="mt-3 flex justify-end">
-        <Link
-          to="/medicines"
-          className="text-xs font-semibold text-purple-600 hover:text-purple-800 flex items-center gap-1 transition-colors"
-        >
-          View order <ChevronRight className="h-3 w-3" />
-        </Link>
-      </div>
-    </div>
-  )
-}
-
-const quickActions = [
+const QUICK_ACTIONS = [
   {
     label: 'Check Symptoms',
-    description: 'Describe what you feel — get triage in 60 seconds.',
+    sub: 'AI triage in 60 seconds',
     icon: Activity,
     href: '/triage',
-    accent: '#15803d',
+    color: '#16a34a',
     bg: '#f0fdf4',
+    border: '#bbf7d0',
   },
   {
     label: 'Book Appointment',
-    description: 'Find a verified clinic and lock in your slot.',
+    sub: 'Find & book verified clinics',
     icon: Calendar,
     href: '/clinics',
-    accent: '#1E40AF',
-    bg: '#eff6ff',
+    color: '#1D4ED8',
+    bg: '#EFF6FF',
+    border: '#BFDBFE',
   },
   {
     label: 'Order Medicine',
-    description: 'Genuine OTC drugs, M-Pesa checkout.',
+    sub: 'OTC drugs, M-Pesa checkout',
     icon: Pill,
     href: '/medicines',
-    accent: '#7c3aed',
-    bg: '#f5f3ff',
+    color: '#7C3AED',
+    bg: '#F5F3FF',
+    border: '#DDD6FE',
   },
   {
-    label: 'My Records',
-    description: 'Health profile, allergies, history.',
+    label: 'Health Profile',
+    sub: 'Records, allergies, history',
     icon: Stethoscope,
     href: '/profile',
-    accent: '#0369a1',
-    bg: '#f0f9ff',
+    color: '#0369A1',
+    bg: '#F0F9FF',
+    border: '#BAE6FD',
   },
 ]
 
@@ -214,152 +125,206 @@ export function DashboardPage() {
     ? orders.filter((o: any) => !['delivered', 'cancelled'].includes(o.status))
     : []
   const activeOrder = activeOrders[0] ?? null
-
-  const stats = [
-    { value: appointments.length.toString(), label: 'Upcoming', sub: 'appointments' },
-    { value: activeOrders.length.toString(), label: 'Active', sub: 'orders' },
-    { value: '—', label: 'This month', sub: 'triage sessions' },
-  ]
+  const cd = nextAppt ? countdown(nextAppt.appointment_date, nextAppt.appointment_time) : null
 
   return (
-    <div className="space-y-7 animate-fade-in">
+    <div className="space-y-6">
 
-      {/* ── Header ───────────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium text-stone-400">{getGreeting()}</p>
-          <h1 className="text-3xl font-extrabold text-[#1a1a18] tracking-tight leading-none mt-1">
-            {firstName} 👋
-          </h1>
-          <p className="text-sm text-stone-500 mt-1.5 leading-relaxed">
-            Your health companion is ready.
-          </p>
-        </div>
-        <button
-          onClick={() => navigate('/notifications')}
-          className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white border border-gray-100 hover:bg-gray-50 transition-colors"
-          style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
+      {/* ── Header ── */}
+      <div className="animate-fade-up-1">
+        <p
+          className="text-[13px] font-medium"
+          style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
         >
-          <Bell className="h-4.5 w-4.5 text-gray-500" />
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 border border-white" />
-        </button>
+          {getGreeting()}
+        </p>
+        <h1
+          className="text-[26px] font-bold tracking-tight mt-0.5"
+          style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}
+        >
+          {firstName}
+        </h1>
+        <p className="text-[13.5px] mt-1" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
+          Here's what's happening with your health today.
+        </p>
       </div>
 
-      {/* ── Stats strip ──────────────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-3">
-        {stats.map((s, i) => (
-          <div
-            key={s.label}
-            className="bg-white rounded-2xl p-4 animate-slide-up"
-            style={{
-              animationDelay: `${i * 0.07}s`,
-              opacity: 0,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-            }}
-          >
-            <p className="text-[28px] font-black text-[#1a1a18] leading-none">{s.value}</p>
-            <p className="text-[11px] font-semibold text-stone-400 uppercase tracking-wide mt-2">{s.label}</p>
-            <p className="text-[11px] text-stone-400">{s.sub}</p>
-          </div>
+      {/* ── Stats row ── */}
+      <div className="grid grid-cols-3 gap-3 animate-fade-up-2">
+        {[
+          { value: appointments.length, label: 'Upcoming appointments', icon: Calendar },
+          { value: activeOrders.length, label: 'Active medicine orders', icon: Package },
+          { value: '—',                 label: 'Triage sessions',        icon: Activity },
+        ].map(({ value, label, icon: Icon }) => (
+          <Card key={label} className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div
+                className="h-8 w-8 rounded-lg flex items-center justify-center"
+                style={{ background: 'var(--color-brand-light)' }}
+              >
+                <Icon className="h-4 w-4" style={{ color: 'var(--color-brand)' }} />
+              </div>
+              <TrendingUp className="h-3.5 w-3.5" style={{ color: 'var(--color-border-strong)' }} />
+            </div>
+            <p
+              className="text-[22px] font-bold tracking-tight tabular-nums"
+              style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}
+            >
+              {value}
+            </p>
+            <p
+              className="text-[11.5px] mt-0.5 leading-snug"
+              style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
+            >
+              {label}
+            </p>
+          </Card>
         ))}
       </div>
 
-      {/* ── Upcoming appointment ─────────────────────────────── */}
+      {/* ── Upcoming appointment ── */}
       {nextAppt && (
-        <div className="animate-slide-up" style={{ animationDelay: '0.18s', opacity: 0 }}>
-          <UpcomingAppointmentCard appt={nextAppt} />
-        </div>
+        <Card className="overflow-hidden animate-fade-up-3">
+          <div className="px-5 py-3 flex items-center justify-between"
+            style={{ borderBottom: '1px solid #F1F5F9', background: '#FAFBFF' }}>
+            <div className="flex items-center gap-2">
+              <Calendar className="h-3.5 w-3.5 text-blue-500" />
+              <span className="text-[12px] font-semibold text-blue-600 uppercase tracking-wide">Next Appointment</span>
+            </div>
+            {cd && (
+              <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${
+                cd.urgent ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
+              }`}>
+                {cd.label}
+              </span>
+            )}
+          </div>
+          <div className="p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-[15px] font-semibold text-slate-900">
+                  {nextAppt.doctor_name ?? 'Doctor TBD'}
+                </h3>
+                {nextAppt.clinic_name && (
+                  <p className="text-[13px] text-slate-400 mt-0.5">{nextAppt.clinic_name}</p>
+                )}
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-[13px] font-semibold text-slate-700">
+                  {format(parseISO(nextAppt.appointment_date), 'EEE, d MMM')}
+                </p>
+                <p className="text-[12px] text-slate-400 mt-0.5 flex items-center justify-end gap-1">
+                  <Clock className="h-3 w-3" />
+                  {nextAppt.appointment_time?.substring(0, 5)}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <a
+                href={`https://maps.google.com/?q=${encodeURIComponent(nextAppt.clinic_name ?? '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 py-2 text-[12.5px] font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                <MapPin className="h-3.5 w-3.5" /> Directions
+              </a>
+              <Link
+                to="/appointments"
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-[12.5px] font-semibold text-white transition-opacity hover:opacity-90"
+                style={{ background: 'var(--color-brand)' }}
+              >
+                View Details <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </div>
+        </Card>
       )}
 
-      {/* ── Active order ─────────────────────────────────────── */}
+      {/* ── Active medicine order ── */}
       {activeOrder && (
-        <div className="animate-slide-up" style={{ animationDelay: '0.24s', opacity: 0 }}>
-          <ActiveOrderCard order={activeOrder} />
-        </div>
+        <Card className="overflow-hidden animate-fade-up-4">
+          <div className="px-5 py-3 flex items-center gap-2"
+            style={{ borderBottom: '1px solid #F1F5F9', background: '#FDFAFF' }}>
+            <Package className="h-3.5 w-3.5 text-violet-500" />
+            <span className="text-[12px] font-semibold text-violet-600 uppercase tracking-wide">Active Order</span>
+          </div>
+          <div className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-[14px] font-semibold text-slate-800">
+                {(activeOrder as any).order_number ?? (activeOrder as any).order_reference ?? 'Order'}
+              </p>
+              <Link to="/medicines" className="text-[12px] font-medium text-violet-600 hover:text-violet-800 flex items-center gap-1 transition-colors">
+                Details <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+            <OrderProgress status={(activeOrder as any).status ?? 'pending'} />
+          </div>
+        </Card>
       )}
 
-      {/* ── Quick actions ─────────────────────────────────────── */}
-      <div>
-        <p className="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-3">
+      {/* ── Quick actions ── */}
+      <div className="animate-fade-up-5">
+        <p
+          className="text-[11.5px] font-semibold uppercase tracking-widest mb-3"
+          style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
+        >
           Quick actions
         </p>
         <div className="grid grid-cols-2 gap-2.5">
-          {quickActions.map(({ label, description, icon: Icon, href, accent, bg }, i) => (
+          {QUICK_ACTIONS.map(({ label, sub, icon: Icon, href, color, bg, border }) => (
             <Link
               key={href}
               to={href}
-              className="group flex flex-col gap-3 bg-white rounded-2xl p-4 transition-all duration-200 hover:-translate-y-0.5 animate-slide-up"
-              style={{
-                animationDelay: `${0.28 + i * 0.06}s`,
-                opacity: 0,
-                boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-              }}
+              className="group flex flex-col gap-3 bg-white rounded-xl p-4 border border-slate-200/80 hover:border-slate-300 hover:shadow-sm transition-all duration-200"
             >
               <div className="flex items-start justify-between gap-2">
-                <div
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-                  style={{ backgroundColor: bg }}
-                >
-                  <Icon className="h-5 w-5" style={{ color: accent }} />
+                <div className="h-9 w-9 shrink-0 rounded-lg flex items-center justify-center"
+                  style={{ background: bg, border: `1px solid ${border}` }}>
+                  <Icon className="h-[17px] w-[17px]" style={{ color }} />
                 </div>
-                <ArrowUpRight className="h-4 w-4 text-stone-300 group-hover:text-stone-500 transition-colors mt-0.5" />
+                <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all mt-0.5" />
               </div>
               <div>
-                <p className="text-sm font-bold text-[#1a1a18]">{label}</p>
-                <p className="text-xs text-stone-400 mt-0.5 leading-relaxed">{description}</p>
+                <p className="text-[13.5px] font-semibold text-slate-800 leading-none">{label}</p>
+                <p className="text-[12px] text-slate-400 mt-1 leading-snug">{sub}</p>
               </div>
             </Link>
           ))}
         </div>
       </div>
 
-      {/* ── No upcoming appointments empty promo ─────────────── */}
-      {!nextAppt && appointments.length === 0 && (
-        <div
-          className="rounded-2xl p-5 flex items-start gap-4 animate-slide-up"
-          style={{ animationDelay: '0.5s', opacity: 0, backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE' }}
-        >
-          <div className="h-10 w-10 shrink-0 rounded-xl bg-blue-100 flex items-center justify-center">
-            <Calendar className="h-5 w-5 text-blue-600" />
+      {/* ── Book CTA — shown only when no upcoming appt ── */}
+      {!nextAppt && (
+        <Card className="p-5 animate-fade-up-6">
+          <div className="flex items-start gap-4">
+            <div className="h-10 w-10 shrink-0 rounded-xl flex items-center justify-center bg-blue-50 border border-blue-100">
+              <Calendar className="h-5 w-5 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[14px] font-semibold text-slate-800">No upcoming appointments</p>
+              <p className="text-[13px] text-slate-400 mt-0.5">
+                Find a verified clinic near you and book in minutes.
+              </p>
+              <Link
+                to="/clinics"
+                className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12.5px] font-semibold text-white hover:opacity-90 transition-opacity"
+                style={{ background: 'var(--color-brand)' }}
+              >
+                Find a clinic <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
           </div>
-          <div className="flex-1">
-            <p className="text-sm font-bold text-blue-900">No upcoming appointments</p>
-            <p className="text-xs text-blue-600 mt-0.5 leading-relaxed">
-              Find a verified clinic near you and book in minutes.
-            </p>
-            <Link
-              to="/clinics"
-              className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold text-white transition-all hover:opacity-90"
-              style={{ backgroundColor: '#1E40AF' }}
-            >
-              Find a clinic <ChevronRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        </div>
+        </Card>
       )}
 
-      {/* ── AI triage disclaimer ─────────────────────────────── */}
-      <div
-        className="rounded-2xl p-4 animate-slide-up"
-        style={{
-          animationDelay: '0.55s',
-          opacity: 0,
-          backgroundColor: '#f0fdf4',
-          border: '1px solid #bbf7d0',
-        }}
-      >
-        <div className="flex items-start gap-3">
-          <div className="h-8 w-8 shrink-0 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-green-900">Guidance only, not a diagnosis</p>
-            <p className="text-xs text-green-700 mt-0.5 leading-relaxed">
-              MedAssist AI gives triage guidance. For emergencies call{' '}
-              <a href="tel:0800723253" className="font-bold underline">0800 723 253</a>.
-            </p>
-          </div>
-        </div>
+      {/* ── Disclaimer ── */}
+      <div className="flex items-start gap-3 rounded-xl bg-emerald-50 border border-emerald-100 p-4 animate-fade-up-6">
+        <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+        <p className="text-[12.5px] text-emerald-700 leading-relaxed">
+          <span className="font-semibold">Guidance only — not a diagnosis.</span>{' '}
+          MedAssist AI provides triage guidance. For emergencies call{' '}
+          <a href="tel:0800723253" className="font-bold underline">0800 723 253</a>.
+        </p>
       </div>
 
     </div>

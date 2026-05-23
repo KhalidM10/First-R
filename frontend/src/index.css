@@ -1,44 +1,128 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
+/* ── Design tokens exposed as Tailwind utilities ── */
 @theme {
-  --color-brand-50:  #f0fdf4;
-  --color-brand-100: #dcfce7;
-  --color-brand-400: #4ade80;
-  --color-brand-500: #22c55e;
-  --color-brand-600: #16a34a;
-  --color-canvas:    #F8FAFC;
-  --color-surface:   #FFFFFF;
-  --color-sidebar:   #0C0E12;
+  /* Surfaces */
+  --color-canvas:        #F7F8FA;
+  --color-surface:       #FFFFFF;
+  --color-surface-2:     #F0F2F5;
+  --color-surface-3:     #E8EAED;
+
+  /* Brand */
+  --color-brand:         #1D4ED8;
+  --color-brand-light:   #EFF6FF;
+  --color-brand-dark:    #1E3A8A;
+
+  /* Semantic */
+  --color-success:       #059669;
+  --color-success-light: #ECFDF5;
+  --color-warning:       #D97706;
+  --color-warning-light: #FFFBEB;
+  --color-danger:        #DC2626;
+  --color-danger-light:  #FEF2F2;
+  --color-info:          #0284C7;
+  --color-info-light:    #F0F9FF;
+
+  /* Text */
+  --color-ink:           #0D0F12;
+  --color-dim:           #4B5563;
+  --color-muted:         #9CA3AF;
+
+  /* Borders */
+  --color-border:        #E5E7EB;
+  --color-border-strong: #D1D5DB;
+
+  /* Fonts */
+  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-body:    "Inter", system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", "Fira Code", monospace;
 }
 
+/* ── CSS custom properties (use in style={} via var()) ── */
+:root {
+  --color-canvas:          #F7F8FA;
+  --color-surface:         #FFFFFF;
+  --color-surface-2:       #F0F2F5;
+  --color-surface-3:       #E8EAED;
+
+  --color-text-primary:    #0D0F12;
+  --color-text-secondary:  #4B5563;
+  --color-text-tertiary:   #9CA3AF;
+  --color-text-inverse:    #FFFFFF;
+
+  --color-brand:           #1D4ED8;
+  --color-brand-light:     #EFF6FF;
+  --color-brand-dark:      #1E3A8A;
+
+  --color-success:         #059669;
+  --color-success-light:   #ECFDF5;
+  --color-warning:         #D97706;
+  --color-warning-light:   #FFFBEB;
+  --color-danger:          #DC2626;
+  --color-danger-light:    #FEF2F2;
+  --color-info:            #0284C7;
+  --color-info-light:      #F0F9FF;
+
+  --color-border:          #E5E7EB;
+  --color-border-strong:   #D1D5DB;
+  --color-border-focus:    #1D4ED8;
+
+  /* Sidebar */
+  --sidebar-bg:            #0F172A;
+  --sidebar-surface:       #1E293B;
+  --sidebar-hover:         #1E293B;
+  --sidebar-active:        #1D4ED8;
+  --sidebar-text:          #94A3B8;
+  --sidebar-text-active:   #FFFFFF;
+  --sidebar-border:        #1E293B;
+
+  /* Radius */
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-xl:   16px;
+  --radius-full: 9999px;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 4px 6px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-xl: 0 10px 15px rgba(0,0,0,0.06), 0 4px 6px rgba(0,0,0,0.04);
+}
+
+/* ── Base ── */
 @layer base {
   html {
-    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    letter-spacing: -0.01em;
+    color: var(--color-text-primary);
+    background-color: var(--color-canvas);
   }
 
   body {
-    background-color: #F8FAFC;
-    color: #0F172A;
+    background-color: var(--color-canvas);
+    color: var(--color-text-primary);
     margin: 0;
   }
 
   #root { min-height: 100vh; }
   * { box-sizing: border-box; }
 
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar       { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 99px; }
-  ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: var(--radius-full);
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-border-strong); }
 }
 
-/* ── Animations ──────────────────────────────────────────────────── */
+/* ── Keyframes ── */
 
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -47,9 +131,19 @@
   to   { opacity: 1; }
 }
 
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes slide-in-right {
-  from { opacity: 0; transform: translateX(20px); }
+  from { opacity: 0; transform: translateX(12px); }
   to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 @keyframes ecg-travel {
@@ -57,43 +151,67 @@
   to   { stroke-dashoffset: -72; }
 }
 
-@keyframes pulse-ring {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.3); }
-  50%       { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
-}
+/* ── Animation utilities ── */
 
-@keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
+.animate-fade-in     { animation: fade-in       0.2s ease forwards; }
+.animate-fade-up     { animation: fade-up        0.3s cubic-bezier(0.16,1,0.3,1) forwards; }
+.animate-slide-up    { animation: slide-up       0.3s cubic-bezier(0.16,1,0.3,1) forwards; }
+.animate-slide-right { animation: slide-in-right 0.3s cubic-bezier(0.16,1,0.3,1) forwards; }
 
-.animate-fade-up    { animation: fade-up 0.5s cubic-bezier(0.16,1,0.3,1) forwards; }
-.animate-fade-in    { animation: fade-in 0.3s ease forwards; }
-.animate-slide-up   { animation: fade-up 0.4s cubic-bezier(0.16,1,0.3,1) forwards; }
-.animate-slide-right{ animation: slide-in-right 0.4s cubic-bezier(0.16,1,0.3,1) forwards; }
+/* Staggered page entry */
+.animate-enter-1 { animation: fade-up 0.35s 0.04s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-enter-2 { animation: fade-up 0.35s 0.09s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-enter-3 { animation: fade-up 0.35s 0.14s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-enter-4 { animation: fade-up 0.35s 0.19s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-enter-5 { animation: fade-up 0.35s 0.24s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-enter-6 { animation: fade-up 0.35s 0.29s cubic-bezier(0.16,1,0.3,1) both; }
 
-.animate-stagger-1  { animation-delay: 0.05s; }
-.animate-stagger-2  { animation-delay: 0.10s; }
-.animate-stagger-3  { animation-delay: 0.15s; }
-.animate-stagger-4  { animation-delay: 0.20s; }
-.animate-stagger-5  { animation-delay: 0.25s; }
+/* Legacy aliases */
+.animate-fade-up-1 { animation: fade-up 0.35s 0.04s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-fade-up-2 { animation: fade-up 0.35s 0.09s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-fade-up-3 { animation: fade-up 0.35s 0.14s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-fade-up-4 { animation: fade-up 0.35s 0.19s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-fade-up-5 { animation: fade-up 0.35s 0.24s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-fade-up-6 { animation: fade-up 0.35s 0.29s cubic-bezier(0.16,1,0.3,1) both; }
 
-.animate-fade-up-1  { animation: fade-up 0.5s 0.05s cubic-bezier(0.16,1,0.3,1) both; }
-.animate-fade-up-2  { animation: fade-up 0.5s 0.10s cubic-bezier(0.16,1,0.3,1) both; }
-.animate-fade-up-3  { animation: fade-up 0.5s 0.15s cubic-bezier(0.16,1,0.3,1) both; }
-.animate-fade-up-4  { animation: fade-up 0.5s 0.20s cubic-bezier(0.16,1,0.3,1) both; }
-.animate-fade-up-5  { animation: fade-up 0.5s 0.25s cubic-bezier(0.16,1,0.3,1) both; }
-.animate-fade-up-6  { animation: fade-up 0.5s 0.30s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-stagger-1 { animation-delay: 0.04s; }
+.animate-stagger-2 { animation-delay: 0.09s; }
+.animate-stagger-3 { animation-delay: 0.14s; }
+.animate-stagger-4 { animation-delay: 0.19s; }
+.animate-stagger-5 { animation-delay: 0.24s; }
 
+/* ECG line pulse */
 .ecg-line {
   stroke-dasharray: 72 308;
   animation: ecg-travel 1.8s linear infinite;
 }
 
-.pulse-btn { animation: pulse-ring 2.5s ease-in-out infinite; }
-
+/* ── Skeleton loading ── */
 .skeleton {
-  background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-2) 25%,
+    var(--color-surface-3) 50%,
+    var(--color-surface-2) 75%
+  );
   background-size: 200% 100%;
-  animation: shimmer 1.4s infinite;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Card primitive ── */
+.card {
+  background:    var(--color-surface);
+  border:        1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow:    var(--shadow-sm);
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration:        0.01ms !important;
+    animation-iteration-count: 1     !important;
+    transition-duration:       0.01ms !important;
+  }
 }

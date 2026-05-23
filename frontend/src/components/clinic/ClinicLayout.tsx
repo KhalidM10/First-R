@@ -12,65 +12,81 @@ import { usePermissions } from '../../contexts/PermissionContext'
 import { useWs } from '../../contexts/WebSocketContext'
 import { api } from '../../lib/api'
 
-interface ClinicNavItem {
+/* ── Nav structure ── */
+interface NavItem {
   href: string
   label: string
   icon: React.ElementType
   end?: boolean
   permission?: [string, string]
   roles?: string[]
-  dividerBefore?: boolean
 }
 
-const CLINIC_NAV: ClinicNavItem[] = [
-  { href: '/clinic-dashboard',               label: 'Overview',      icon: LayoutDashboard, end: true },
-  { href: '/clinic-dashboard/appointments',  label: 'Appointments',  icon: Calendar,        permission: ['appointments', 'read'] },
-  { href: '/clinic-dashboard/patients',      label: 'Patients',      icon: Users,           permission: ['patients', 'read'] },
-  { href: '/clinic-dashboard/doctors',       label: 'Doctors',       icon: Stethoscope },
-  { href: '/clinic-dashboard/orders',        label: 'Orders',        icon: Package,         permission: ['orders', 'read:clinic'] },
-  { href: '/clinic-dashboard/products',      label: 'Products',      icon: Store },
-  { href: '/clinic-dashboard/analytics',     label: 'Analytics',     icon: BarChart2,       permission: ['analytics', 'read:basic'], dividerBefore: true },
-  { href: '/clinic-dashboard/reviews',       label: 'Reviews',       icon: Star },
-  { href: '/clinic-dashboard/audit',         label: 'Audit Logs',    icon: ShieldCheck,     permission: ['audit', 'read:own_clinic'] },
-  { href: '/clinic-dashboard/subscription',  label: 'Subscription',  icon: CreditCard,      roles: ['clinic_admin', 'super_admin'], dividerBefore: true },
-  { href: '/clinic-dashboard/settings',      label: 'Settings',      icon: Settings,        roles: ['clinic_admin', 'super_admin'] },
+interface NavSection {
+  label?: string
+  items: NavItem[]
+}
+
+const SECTIONS: NavSection[] = [
+  {
+    items: [
+      { href: '/clinic-dashboard',               label: 'Overview',      icon: LayoutDashboard, end: true },
+      { href: '/clinic-dashboard/appointments',  label: 'Appointments',  icon: Calendar,        permission: ['appointments', 'read'] },
+      { href: '/clinic-dashboard/patients',      label: 'Patients',      icon: Users,           permission: ['patients', 'read'] },
+      { href: '/clinic-dashboard/doctors',       label: 'Doctors',       icon: Stethoscope },
+    ],
+  },
+  {
+    label: 'Operations',
+    items: [
+      { href: '/clinic-dashboard/orders',        label: 'Orders',        icon: Package,  permission: ['orders', 'read:clinic'] },
+      { href: '/clinic-dashboard/products',      label: 'Products',      icon: Store },
+    ],
+  },
+  {
+    label: 'Insights',
+    items: [
+      { href: '/clinic-dashboard/analytics',     label: 'Analytics',     icon: BarChart2,  permission: ['analytics', 'read:basic'] },
+      { href: '/clinic-dashboard/reviews',       label: 'Reviews',       icon: Star },
+      { href: '/clinic-dashboard/audit',         label: 'Audit Logs',    icon: ShieldCheck, permission: ['audit', 'read:own_clinic'] },
+    ],
+  },
+  {
+    label: 'Account',
+    items: [
+      { href: '/clinic-dashboard/subscription',  label: 'Subscription',  icon: CreditCard, roles: ['clinic_admin', 'super_admin'] },
+      { href: '/clinic-dashboard/settings',      label: 'Settings',      icon: Settings,   roles: ['clinic_admin', 'super_admin'] },
+    ],
+  },
 ]
 
-const PLAN_BADGE: Record<string, { label: string; bg: string; color: string }> = {
-  basic:      { label: 'Basic',      bg: 'rgba(255,255,255,0.06)',  color: 'rgba(255,255,255,0.35)' },
-  pro:        { label: 'Pro',        bg: 'rgba(34,197,94,0.12)',    color: '#4ade80' },
-  enterprise: { label: 'Enterprise', bg: 'rgba(124,58,237,0.15)',   color: '#c4b5fd' },
+const PLAN_BADGE: Record<string, { label: string; color: string; bg: string }> = {
+  basic:      { label: 'Basic',      color: 'var(--sidebar-text)',   bg: 'var(--sidebar-surface)' },
+  pro:        { label: 'Pro',        color: '#4ade80',               bg: 'rgba(74,222,128,0.12)' },
+  enterprise: { label: 'Enterprise', color: '#c4b5fd',               bg: 'rgba(196,181,253,0.12)' },
 }
 
-function EcgLogo() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-      <path
-        d="M1 11 L6 11 L8 7 L11 16 L13 6 L15 11 L21 11"
-        stroke="#22c55e"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function UserAvatar({ name, size = 'sm' }: { name?: string; size?: 'sm' | 'md' }) {
+/* ── Sub-components ── */
+function Avatar({ name }: { name?: string }) {
   const initials = name
     ? name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
     : '?'
-  const dim = size === 'sm' ? 'h-7 w-7 text-[11px]' : 'h-9 w-9 text-[13px]'
   return (
     <div
-      className={cn('flex shrink-0 items-center justify-center rounded-full font-semibold select-none', dim)}
-      style={{ background: 'linear-gradient(135deg, #22c55e22, #16a34a33)', color: '#16a34a', border: '1px solid #22c55e30' }}
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold select-none"
+      style={{
+        background: 'rgba(255,255,255,0.08)',
+        color: '#E2E8F0',
+        border: '1px solid rgba(255,255,255,0.1)',
+        fontFamily: 'var(--font-body)',
+      }}
     >
       {initials}
     </div>
   )
 }
 
+/* ── Layout ── */
 export function ClinicLayout() {
   const { user, logout } = useAuthStore()
   const { can } = usePermissions()
@@ -87,172 +103,307 @@ export function ClinicLayout() {
 
   const clinicName = stats?.clinic_name ?? 'Clinic Portal'
   const plan = (stats as any)?.subscription_plan ?? 'basic'
-  const planBadge = PLAN_BADGE[plan] ?? PLAN_BADGE.basic
+  const badge = PLAN_BADGE[plan] ?? PLAN_BADGE.basic
 
-  const visibleNav = CLINIC_NAV.filter(item => {
+  function visible(item: NavItem) {
     if (item.roles && user && !item.roles.includes(user.role)) return false
     if (item.permission && !can(item.permission[0], item.permission[1])) return false
     return true
-  })
+  }
 
   const rawPage = pathname.replace('/clinic-dashboard', '').replace(/^\//, '') || 'overview'
   const pageLabel = rawPage.charAt(0).toUpperCase() + rawPage.slice(1).replace(/-/g, ' ')
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
+    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: 'var(--color-canvas)' }}>
 
       {/* ── Sidebar ── */}
       <aside
         className={cn(
-          'relative flex flex-col shrink-0 select-none transition-[width] duration-300 ease-in-out',
-          collapsed ? 'w-[60px]' : 'w-[232px]',
+          'group/sidebar relative flex flex-col shrink-0 select-none transition-[width] duration-300 ease-in-out overflow-hidden',
+          collapsed ? 'w-16' : 'w-[248px]',
         )}
-        style={{ background: '#0C0E12', borderRight: '1px solid rgba(255,255,255,0.06)' }}
+        style={{
+          background: 'var(--sidebar-bg)',
+          borderRight: '1px solid var(--sidebar-border)',
+        }}
       >
-        {/* Logo */}
+        {/* Logo header */}
         <div
-          className="flex h-[58px] items-center px-4 gap-3"
-          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+          className="flex h-16 shrink-0 items-center px-5"
+          style={{ borderBottom: '1px solid var(--sidebar-border)' }}
         >
+          {/* ECG icon */}
           <div
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-            style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)' }}
+            style={{ background: 'rgba(29,78,216,0.2)', border: '1px solid rgba(29,78,216,0.3)' }}
           >
-            <EcgLogo />
+            <svg width="16" height="16" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+              <path
+                d="M1 11 L6 11 L8 7 L11 16 L13 6 L15 11 L21 11"
+                stroke="#93C5FD"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </div>
+
           {!collapsed && (
-            <div className="min-w-0 flex-1">
-              <p className="text-white text-[13.5px] font-semibold tracking-[-0.02em] leading-none">MedAssist</p>
-              <p className="text-[10.5px] font-medium mt-[3px] opacity-70 truncate" style={{ color: '#22c55e' }}>
+            <div className="ml-3 min-w-0 flex-1">
+              <p
+                className="text-[13.5px] font-semibold leading-none text-white tracking-tight"
+                style={{ fontFamily: 'var(--font-display)' }}
+              >
+                MedAssist AI
+              </p>
+              <p className="mt-[3px] truncate text-[11px]" style={{ color: 'var(--sidebar-text)' }}>
                 {clinicName}
               </p>
             </div>
           )}
-        </div>
 
-        {/* Plan badge */}
-        {!collapsed && (
-          <div className="px-3 pt-3 pb-1">
-            <span
-              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider"
-              style={{ backgroundColor: planBadge.bg, color: planBadge.color }}
-            >
-              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: planBadge.color }} />
-              {planBadge.label}
-            </span>
-          </div>
-        )}
-
-        {/* Nav */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 pt-2 pb-2">
-          {visibleNav.map(({ href, label, icon: Icon, end, dividerBefore }) => (
-            <div key={href}>
-              {dividerBefore && <div className="mx-2.5 my-2 h-px bg-white/[0.07]" />}
-              <NavLink
-                to={href}
-                end={end}
-                title={collapsed ? label : undefined}
-                className={({ isActive }) =>
-                  cn(
-                    'group relative flex items-center gap-3 rounded-lg px-2.5 py-[8.5px] mb-[2px] text-[13px] font-medium transition-all duration-150',
-                    isActive
-                      ? 'text-white bg-white/[0.08]'
-                      : 'text-white/40 hover:text-white/75 hover:bg-white/[0.04]',
-                  )
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    {isActive && (
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-[#22c55e]" />
-                    )}
-                    <Icon
-                      className={cn(
-                        'h-[16px] w-[16px] shrink-0 transition-colors',
-                        isActive ? 'text-[#22c55e]' : 'text-white/35 group-hover:text-white/60',
-                      )}
-                    />
-                    {!collapsed && <span className="flex-1 truncate">{label}</span>}
-                  </>
-                )}
-              </NavLink>
-            </div>
-          ))}
-        </nav>
-
-        {/* User + Collapse */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} className="p-2">
-          {!collapsed ? (
-            <div className="flex items-center gap-2.5 rounded-lg px-2 py-2 mb-1">
-              <UserAvatar name={user?.full_name} />
-              <div className="min-w-0 flex-1">
-                <p className="text-[12.5px] font-medium text-white/80 truncate leading-tight">{user?.full_name}</p>
-                <p className="text-[11px] text-white/30 capitalize mt-[2px] truncate">
-                  {user?.role?.replace(/_/g, ' ')}
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="flex justify-center mb-1 py-1">
-              <UserAvatar name={user?.full_name} />
-            </div>
-          )}
-
-          <button
-            onClick={() => { logout(); navigate('/login') }}
-            title={collapsed ? 'Sign out' : undefined}
-            className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-[12.5px] font-medium text-white/25 hover:text-red-400 hover:bg-red-500/10 transition-all"
-          >
-            <LogOut className="h-[15px] w-[15px] shrink-0" />
-            {!collapsed && 'Sign out'}
-          </button>
-
+          {/* Collapse toggle — visible on sidebar hover */}
           <button
             onClick={() => setCollapsed(v => !v)}
-            className="mt-1 flex w-full items-center justify-center rounded-lg py-1.5 text-white/20 hover:text-white/50 hover:bg-white/[0.04] transition-all"
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className={cn(
+              'ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-all duration-150',
+              'opacity-0 group-hover/sidebar:opacity-100',
+            )}
+            style={{ color: 'var(--sidebar-text)' }}
+            onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--sidebar-hover)')}
+            onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+            title={collapsed ? 'Expand' : 'Collapse'}
           >
             {collapsed
               ? <ChevronRight className="h-3.5 w-3.5" />
               : <ChevronLeft className="h-3.5 w-3.5" />}
           </button>
         </div>
+
+        {/* Plan badge */}
+        {!collapsed && (
+          <div className="px-4 pt-3 pb-0.5">
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-[3px] text-[10px] font-bold uppercase tracking-widest"
+              style={{ backgroundColor: badge.bg, color: badge.color }}
+            >
+              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: badge.color }} />
+              {badge.label}
+            </span>
+          </div>
+        )}
+
+        {/* Nav sections */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3">
+          {SECTIONS.map((section, si) => {
+            const visibleItems = section.items.filter(visible)
+            if (!visibleItems.length) return null
+            return (
+              <div key={si}>
+                {section.label && !collapsed && (
+                  <p
+                    className="px-5 pb-2 pt-5 text-[10px] font-semibold uppercase tracking-[0.1em]"
+                    style={{ color: '#475569', fontFamily: 'var(--font-body)' }}
+                  >
+                    {section.label}
+                  </p>
+                )}
+                {section.label && collapsed && si > 0 && (
+                  <div className="my-2 mx-3 h-px" style={{ backgroundColor: 'var(--sidebar-border)' }} />
+                )}
+                <div className="px-2 space-y-[1px]">
+                  {visibleItems.map(({ href, label, icon: Icon, end }) => (
+                    <NavLink
+                      key={href}
+                      to={href}
+                      end={end}
+                      title={collapsed ? label : undefined}
+                      className={({ isActive }) =>
+                        cn(
+                          'flex items-center gap-2.5 rounded-md px-3 transition-all duration-150',
+                          'h-9',
+                          isActive
+                            ? 'text-white'
+                            : 'hover:text-white/80',
+                        )
+                      }
+                      style={({ isActive }) => ({
+                        backgroundColor: isActive ? 'var(--sidebar-active)' : 'transparent',
+                        color: isActive ? '#FFFFFF' : 'var(--sidebar-text)',
+                      })}
+                      onMouseEnter={e => {
+                        const link = e.currentTarget
+                        if (!link.classList.contains('active')) {
+                          link.style.backgroundColor = 'var(--sidebar-hover)'
+                        }
+                      }}
+                      onMouseLeave={e => {
+                        const link = e.currentTarget
+                        if (!link.classList.contains('active')) {
+                          link.style.backgroundColor = 'transparent'
+                        }
+                      }}
+                    >
+                      {({ isActive }) => (
+                        <>
+                          <Icon
+                            className="h-4 w-4 shrink-0"
+                            style={{ color: isActive ? '#FFFFFF' : 'var(--sidebar-text)' }}
+                          />
+                          {!collapsed && (
+                            <span
+                              className="flex-1 truncate text-[13.5px]"
+                              style={{
+                                fontFamily: 'var(--font-body)',
+                                fontWeight: isActive ? 500 : 400,
+                                color: isActive ? '#FFFFFF' : 'var(--sidebar-text)',
+                              }}
+                            >
+                              {label}
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </NavLink>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </nav>
+
+        {/* User profile */}
+        <div
+          className="shrink-0 p-3"
+          style={{ borderTop: '1px solid var(--sidebar-border)' }}
+        >
+          {!collapsed ? (
+            <div className="flex items-center gap-2.5 rounded-md px-2 py-2">
+              <Avatar name={user?.full_name} />
+              <div className="min-w-0 flex-1">
+                <p
+                  className="truncate text-[12.5px] font-medium leading-tight"
+                  style={{ color: '#E2E8F0', fontFamily: 'var(--font-body)' }}
+                >
+                  {user?.full_name}
+                </p>
+                <p
+                  className="mt-[2px] truncate text-[11px] capitalize"
+                  style={{ color: '#64748B', fontFamily: 'var(--font-body)' }}
+                >
+                  {user?.role?.replace(/_/g, ' ')}
+                </p>
+              </div>
+              <button
+                onClick={() => { logout(); navigate('/login') }}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors duration-150"
+                style={{ color: '#64748B' }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.12)'
+                  e.currentTarget.style.color = '#F87171'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                  e.currentTarget.style.color = '#64748B'
+                }}
+                title="Sign out"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-2">
+              <Avatar name={user?.full_name} />
+              <button
+                onClick={() => { logout(); navigate('/login') }}
+                className="flex h-7 w-7 items-center justify-center rounded-md transition-colors duration-150"
+                style={{ color: '#64748B' }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.12)'
+                  e.currentTarget.style.color = '#F87171'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                  e.currentTarget.style.color = '#64748B'
+                }}
+                title="Sign out"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
       </aside>
 
-      {/* ── Main ── */}
+      {/* ── Main content area ── */}
       <main className="flex flex-1 flex-col overflow-hidden">
-        {/* Topbar */}
+
+        {/* Top bar */}
         <header
-          className="flex h-[58px] shrink-0 items-center justify-between px-6 bg-white"
-          style={{ borderBottom: '1px solid #E2E8F0' }}
+          className="flex h-16 shrink-0 items-center justify-between px-8"
+          style={{
+            backgroundColor: 'var(--color-surface)',
+            borderBottom: '1px solid var(--color-border)',
+          }}
         >
-          <div className="flex items-center gap-2 text-[13px]">
-            <span className="text-slate-400">Clinic</span>
-            <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
-            <span className="font-semibold text-slate-700 capitalize">{pageLabel}</span>
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2">
+            <span
+              className="text-[13px]"
+              style={{ color: 'var(--color-text-tertiary)', fontFamily: 'var(--font-body)' }}
+            >
+              Clinic
+            </span>
+            <ChevronRight className="h-3.5 w-3.5" style={{ color: 'var(--color-border-strong)' }} />
+            <span
+              className="text-[13px] font-medium capitalize"
+              style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}
+            >
+              {pageLabel}
+            </span>
           </div>
 
+          {/* Right */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate('/notifications')}
-              className="relative flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
+              className="relative flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150"
+              style={{ color: 'var(--color-text-tertiary)' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--color-surface-2)')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
             >
               <Bell className="h-4 w-4" />
               {unreadCount > 0 && (
-                <span className="absolute right-1 top-1 h-[7px] w-[7px] rounded-full bg-red-500 border-2 border-white" />
+                <span
+                  className="absolute right-1 top-1 h-[7px] w-[7px] rounded-full border-2 border-white"
+                  style={{ backgroundColor: 'var(--color-danger)' }}
+                />
               )}
             </button>
-            <div className="w-px h-5 bg-slate-200" />
-            <UserAvatar name={user?.full_name} size="sm" />
-            <span className="text-[13px] font-medium text-slate-700 hidden sm:block">
+            <div className="h-5 w-px mx-1" style={{ backgroundColor: 'var(--color-border)' }} />
+            <div
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold select-none"
+              style={{
+                background: 'var(--color-brand-light)',
+                color: 'var(--color-brand)',
+                fontFamily: 'var(--font-body)',
+              }}
+            >
+              {user?.full_name?.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase() ?? '?'}
+            </div>
+            <span
+              className="hidden sm:block text-[13px] font-medium"
+              style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}
+            >
               {user?.full_name?.split(' ')[0]}
             </span>
           </div>
         </header>
 
-        {/* Page content */}
+        {/* Page */}
         <div className="flex-1 overflow-y-auto">
-          <div className="px-6 py-7">
+          <div className="px-8 py-8">
             <Outlet />
           </div>
         </div>

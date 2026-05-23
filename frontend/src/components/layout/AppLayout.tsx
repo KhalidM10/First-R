@@ -1,56 +1,93 @@
-import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Activity, BarChart2, Bell, Building2, Calendar, LayoutDashboard, LogOut, Pill, User } from 'lucide-react'
+import {
+  Activity, Bell, Building2, Calendar, LayoutDashboard,
+  LogOut, Pill, User,
+} from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useAuthStore } from '../../store/auth'
 import { usePermissions } from '../../contexts/PermissionContext'
 import { useWs } from '../../contexts/WebSocketContext'
 import { CLINIC_ROLES } from '../../types'
 
-interface NavItem {
-  href: string
-  label: string
-  icon: React.ElementType
-  /** If set, only render when can(resource, action) is true */
-  permission?: [string, string]
-  /** If set, only render for these roles */
-  roles?: string[]
-  /** If set, never render for these roles */
-  excludeRoles?: string[]
-}
-
-const ALL_NAV_ITEMS: NavItem[] = [
-  { href: '/dashboard',    label: 'Dashboard',      icon: LayoutDashboard },
-  { href: '/triage',       label: 'Check Symptoms', icon: Activity,     excludeRoles: [...CLINIC_ROLES] },
-  { href: '/clinics',      label: 'Find Clinics',   icon: Building2,    excludeRoles: [...CLINIC_ROLES] },
-  { href: '/appointments', label: 'Appointments',   icon: Calendar,     permission: ['appointments', 'read:own'] },
-  { href: '/medicines',      label: 'Medicines',      icon: Pill,         permission: ['orders', 'create'] },
-  { href: '/notifications',  label: 'Notifications',  icon: Bell,         excludeRoles: [...CLINIC_ROLES] },
-  { href: '/profile',        label: 'Profile',        icon: User },
-]
-
-function EcgMark() {
+/* ── Logo ── */
+function Logo() {
   return (
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-      <path
-        d="M1 11 L6 11 L8 7 L11 16 L13 6 L15 11 L21 11"
-        stroke="#4ade80"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <Link to="/dashboard" className="flex items-center gap-2.5 shrink-0">
+      <div
+        className="flex h-8 w-8 items-center justify-center rounded-lg"
+        style={{ background: 'var(--color-brand-light)' }}
+      >
+        <svg width="16" height="16" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+          <path
+            d="M1 11 L6 11 L8 7 L11 16 L13 6 L15 11 L21 11"
+            stroke="var(--color-brand)"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
+      <span
+        className="hidden sm:block text-[15px] font-semibold tracking-tight"
+        style={{ fontFamily: 'var(--font-display)', color: 'var(--color-text-primary)' }}
+      >
+        MedAssist
+        <span
+          className="ml-1.5 inline-flex items-center px-1.5 py-px text-[9px] font-bold text-white rounded align-middle"
+          style={{ backgroundColor: 'var(--color-brand)', letterSpacing: '0.06em', lineHeight: 1.8 }}
+        >
+          AI
+        </span>
+      </span>
+    </Link>
   )
 }
 
-function Avatar({ name }: { name?: string }) {
-  const initials = name ? name[0].toUpperCase() : '?'
+/* ── Initials avatar ── */
+function Avatar({ name, size = 32 }: { name?: string; size?: number }) {
+  const initials = name
+    ? name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
+    : '?'
   return (
-    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-500/20 text-green-400 text-xs font-bold">
+    <div
+      className="flex shrink-0 items-center justify-center rounded-full font-semibold select-none"
+      style={{
+        height: size, width: size,
+        fontSize: size < 36 ? 11 : 13,
+        background: 'var(--color-brand-light)',
+        color: 'var(--color-brand)',
+        border: '1.5px solid var(--color-brand-light)',
+        fontFamily: 'var(--font-body)',
+      }}
+    >
       {initials}
     </div>
   )
 }
+
+/* ── Navigation config ── */
+interface NavItem {
+  href: string
+  label: string
+  icon: React.ElementType
+  permission?: [string, string]
+  excludeRoles?: string[]
+}
+
+const DESKTOP_NAV: NavItem[] = [
+  { href: '/triage',       label: 'Check Symptoms',  icon: Activity,   excludeRoles: [...CLINIC_ROLES] },
+  { href: '/clinics',      label: 'Find Clinics',    icon: Building2,  excludeRoles: [...CLINIC_ROLES] },
+  { href: '/appointments', label: 'Appointments',    icon: Calendar,   permission: ['appointments', 'read:own'] },
+  { href: '/medicines',    label: 'Medicines',       icon: Pill,       permission: ['orders', 'create'] },
+]
+
+const BOTTOM_NAV: NavItem[] = [
+  { href: '/dashboard',    label: 'Home',        icon: LayoutDashboard },
+  { href: '/triage',       label: 'Symptoms',    icon: Activity,   excludeRoles: [...CLINIC_ROLES] },
+  { href: '/clinics',      label: 'Clinics',     icon: Building2,  excludeRoles: [...CLINIC_ROLES] },
+  { href: '/appointments', label: 'Appointments',icon: Calendar,   permission: ['appointments', 'read:own'] },
+  { href: '/profile',      label: 'Profile',     icon: User },
+]
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuthStore()
@@ -58,174 +95,172 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { unreadCount } = useWs()
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  const [collapsed, setCollapsed] = useState(false)
 
-  function handleLogout() {
-    logout()
-    navigate('/login')
-  }
-
-  const visibleNav = ALL_NAV_ITEMS.filter((item) => {
-    if (item.roles && user && !item.roles.includes(user.role)) return false
+  function isVisible(item: NavItem) {
     if (item.excludeRoles && user && item.excludeRoles.includes(user.role)) return false
     if (item.permission && !can(item.permission[0], item.permission[1])) return false
     return true
-  })
+  }
 
-  const isClinicStaff = user ? CLINIC_ROLES.includes(user.role) : false
+  const visibleDesktopNav = DESKTOP_NAV.filter(isVisible)
+  const visibleBottomNav  = BOTTOM_NAV.filter(isVisible)
+  const isClinicStaff     = user ? CLINIC_ROLES.includes(user.role) : false
 
   return (
-    <div className="flex h-screen" style={{ backgroundColor: '#f4f3ef' }}>
-      {/* ── Sidebar ──────────────────────────────────────────── */}
-      <aside
-        className={cn(
-          'flex flex-col transition-all duration-300 ease-in-out shrink-0 select-none',
-          collapsed ? 'w-[64px]' : 'w-[216px]',
-        )}
-        style={{ backgroundColor: '#0d1f10' }}
-      >
-        {/* Logo */}
-        <button
-          onClick={() => setCollapsed(v => !v)}
-          className="flex h-[60px] w-full items-center gap-3 px-[18px] transition-colors hover:bg-white/5 focus:outline-none"
-        >
-          <div
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-            style={{ backgroundColor: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.25)' }}
-          >
-            <EcgMark />
-          </div>
-          {!collapsed && (
-            <div className="overflow-hidden text-left">
-              <p className="text-white font-bold text-[13px] leading-none tracking-tight">MedAssist</p>
-              <p className="text-green-400/70 text-[11px] font-medium mt-[3px]">AI Platform</p>
-            </div>
-          )}
-        </button>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-canvas)' }}>
 
-        {/* Nav */}
-        <nav className="flex-1 px-2 pt-3 pb-2 space-y-[2px]">
-          {visibleNav.map(({ href, label, icon: Icon }) => {
-            const active =
-              pathname.startsWith(href) ||
-              (href === '/clinics' && pathname.startsWith('/book'))
+      {/* ── Top navigation bar ── */}
+      <header
+        className="sticky top-0 z-40"
+        style={{
+          backgroundColor: 'var(--color-surface)',
+          borderBottom: '1px solid var(--color-border)',
+          height: 64,
+        }}
+      >
+        <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-6">
+
+          {/* Left: logo */}
+          <Logo />
+
+          {/* Center: desktop nav links */}
+          <nav className="hidden md:flex items-center gap-1">
+            {visibleDesktopNav.map(({ href, label }) => {
+              const active = pathname.startsWith(href)
+              return (
+                <Link
+                  key={href}
+                  to={href}
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-150"
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: 14,
+                    color:           active ? 'var(--color-brand)'       : 'var(--color-text-secondary)',
+                    backgroundColor: active ? 'var(--color-brand-light)' : 'transparent',
+                  }}
+                >
+                  {label}
+                </Link>
+              )
+            })}
+            {isClinicStaff && (
+              <Link
+                to="/clinic-dashboard"
+                className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-150"
+                style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--color-text-secondary)' }}
+              >
+                Clinic Portal
+              </Link>
+            )}
+          </nav>
+
+          {/* Right: bell + avatar */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate('/notifications')}
+              className="relative flex h-9 w-9 items-center justify-center rounded-lg transition-colors duration-150"
+              style={{ color: 'var(--color-text-tertiary)' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--color-surface-2)')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+            >
+              <Bell className="h-[18px] w-[18px]" />
+              {unreadCount > 0 && (
+                <span
+                  className="absolute right-1.5 top-1.5 flex h-[7px] w-[7px] rounded-full"
+                  style={{ backgroundColor: 'var(--color-danger)' }}
+                />
+              )}
+            </button>
+
+            <div className="h-5 w-px mx-1" style={{ backgroundColor: 'var(--color-border)' }} />
+
+            {/* Avatar dropdown (simple click to profile) */}
+            <button
+              onClick={() => navigate('/profile')}
+              className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors duration-150"
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--color-surface-2)')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+            >
+              <Avatar name={user?.full_name} size={28} />
+              <span
+                className="hidden sm:block text-[13px] font-medium"
+                style={{ fontFamily: 'var(--font-body)', color: 'var(--color-text-primary)' }}
+              >
+                {user?.full_name?.split(' ')[0]}
+              </span>
+            </button>
+
+            {/* Sign out (desktop, subtle) */}
+            <button
+              onClick={() => { logout(); navigate('/login') }}
+              className="hidden md:flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150"
+              title="Sign out"
+              style={{ color: 'var(--color-text-tertiary)' }}
+              onMouseEnter={e => {
+                e.currentTarget.style.backgroundColor = 'var(--color-danger-light)'
+                e.currentTarget.style.color = 'var(--color-danger)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+                e.currentTarget.style.color = 'var(--color-text-tertiary)'
+              }}
+            >
+              <LogOut className="h-[15px] w-[15px]" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* ── Page content ── */}
+      <main
+        className="mx-auto max-w-6xl px-6 pb-28 md:pb-8"
+        style={{ paddingTop: 32 }}
+      >
+        {children}
+      </main>
+
+      {/* ── Mobile bottom navigation ── */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 md:hidden z-40"
+        style={{
+          backgroundColor: 'var(--color-surface)',
+          borderTop: '1px solid var(--color-border)',
+          height: 64,
+          boxShadow: '0 -4px 12px rgba(0,0,0,0.06)',
+        }}
+      >
+        <div
+          className={cn(
+            'h-full grid',
+            visibleBottomNav.length === 5 ? 'grid-cols-5' : 'grid-cols-4',
+          )}
+        >
+          {visibleBottomNav.map(({ href, label, icon: Icon }) => {
+            const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
             return (
               <Link
                 key={href}
                 to={href}
-                title={collapsed ? label : undefined}
-                className={cn(
-                  'relative flex items-center gap-3 rounded-xl px-3 py-[9px] text-[13px] font-medium transition-all duration-150 group',
-                  active
-                    ? 'bg-white/10 text-white'
-                    : 'text-white/40 hover:bg-white/5 hover:text-white/70',
-                )}
+                className="flex flex-col items-center justify-center gap-1 transition-colors duration-150"
+                style={{
+                  color: active ? 'var(--color-brand)' : 'var(--color-text-tertiary)',
+                }}
               >
-                <Icon
-                  className={cn(
-                    'h-[17px] w-[17px] shrink-0 transition-colors',
-                    active ? 'text-green-400' : 'group-hover:text-white/60',
-                  )}
-                />
-                {!collapsed && (
-                  <>
-                    <span className="flex-1">{label}</span>
-                    {href === '/notifications' && unreadCount > 0 && (
-                      <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-extrabold text-white">
-                        {unreadCount > 99 ? '99+' : unreadCount}
-                      </span>
-                    )}
-                    {active && href !== '/notifications' && (
-                      <span className="h-[6px] w-[6px] rounded-full bg-green-400" />
-                    )}
-                  </>
-                )}
-                {collapsed && href === '/notifications' && unreadCount > 0 && (
-                  <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
-                )}
+                <Icon className="h-5 w-5" />
+                <span
+                  className="text-[10px]"
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontWeight: active ? 500 : 400,
+                  }}
+                >
+                  {label}
+                </span>
               </Link>
             )
           })}
-
-          {/* Clinic portal link — clinic staff only */}
-          {isClinicStaff && (
-            <>
-              {!collapsed && (
-                <p className="px-3 pt-4 pb-1 text-[10px] font-bold uppercase tracking-widest text-white/20">
-                  Clinic
-                </p>
-              )}
-              {collapsed && <div className="my-2 mx-3 h-px bg-white/10" />}
-              <Link
-                to="/clinic-dashboard"
-                title={collapsed ? 'Clinic Dashboard' : undefined}
-                className={cn(
-                  'flex items-center gap-3 rounded-xl px-3 py-[9px] text-[13px] font-medium transition-all duration-150 group',
-                  pathname.startsWith('/clinic-dashboard')
-                    ? 'bg-white/10 text-white'
-                    : 'text-white/40 hover:bg-white/5 hover:text-white/70',
-                )}
-              >
-                <BarChart2
-                  className={cn(
-                    'h-[17px] w-[17px] shrink-0 transition-colors',
-                    pathname.startsWith('/clinic-dashboard') ? 'text-green-400' : 'group-hover:text-white/60',
-                  )}
-                />
-                {!collapsed && (
-                  <>
-                    <span className="flex-1">Clinic Portal</span>
-                    {pathname.startsWith('/clinic-dashboard') && (
-                      <span className="h-[6px] w-[6px] rounded-full bg-green-400" />
-                    )}
-                  </>
-                )}
-              </Link>
-            </>
-          )}
-        </nav>
-
-        {/* User */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} className="p-3">
-          {!collapsed ? (
-            <div className="flex items-center gap-2.5 px-1 mb-2">
-              <Avatar name={user?.full_name} />
-              <div className="flex-1 min-w-0">
-                <p className="text-white/80 text-[11px] font-semibold truncate">{user?.full_name}</p>
-                <p className="text-white/30 text-[11px] capitalize mt-[1px]">
-                  {user?.role?.replace(/_/g, ' ')}
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="flex justify-center mb-2">
-              <Avatar name={user?.full_name} />
-            </div>
-          )}
-          <button
-            onClick={handleLogout}
-            title={collapsed ? 'Sign out' : undefined}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium text-white/30 hover:bg-red-500/10 hover:text-red-400 transition-colors"
-          >
-            <LogOut className="h-[16px] w-[16px] shrink-0" />
-            {!collapsed && 'Sign out'}
-          </button>
         </div>
-      </aside>
-
-      {/* ── Main content ──────────────────────────────────────── */}
-      <main className="flex-1 overflow-y-auto relative">
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px)',
-            backgroundSize: '22px 22px',
-          }}
-        />
-        <div className="relative max-w-3xl mx-auto px-6 py-8">
-          {children}
-        </div>
-      </main>
+      </nav>
     </div>
   )
 }

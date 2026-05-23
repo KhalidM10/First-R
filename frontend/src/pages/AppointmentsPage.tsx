@@ -41,10 +41,7 @@ function AppointmentCard({ appt, showCancel, showReview }: { appt: Appointment; 
   const timeStr = appt.appointment_time?.substring(0, 5) ?? '—'
 
   return (
-    <div
-      className="bg-white rounded-2xl p-5 border border-gray-100 transition-all hover:border-gray-200"
-      style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
-    >
+    <div className="bg-white rounded-xl p-5 border border-slate-200/80 transition-all hover:border-slate-300 hover:shadow-sm">
       {/* Date + time + status */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div>
@@ -204,15 +201,15 @@ export function AppointmentsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+      <div className="flex gap-1 bg-slate-100 rounded-xl p-1">
         {tabs.map(t => (
           <button
             key={t.key}
             onClick={() => setFilter(t.key)}
-            className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${
+            className={`flex-1 rounded-lg py-2 text-[13px] font-semibold transition-all ${
               filter === t.key
-                ? 'bg-white shadow-sm text-gray-900'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-white shadow-sm text-slate-900'
+                : 'text-slate-500 hover:text-slate-700'
             }`}
           >
             {t.label}

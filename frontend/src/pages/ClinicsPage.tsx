@@ -32,19 +32,19 @@ const SPECIALTIES = [
 
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-2xl p-5 border border-gray-100">
+    <div className="bg-white rounded-xl p-5 border border-slate-200/80">
       <div className="flex gap-3 mb-4">
-        <div className="h-10 w-10 rounded-xl bg-gray-100 animate-pulse shrink-0" />
+        <div className="h-10 w-10 rounded-lg skeleton shrink-0" />
         <div className="flex-1 space-y-2">
-          <div className="h-3.5 bg-gray-100 rounded-full w-3/5 animate-pulse" />
-          <div className="h-3 bg-gray-100 rounded-full w-4/5 animate-pulse" />
+          <div className="h-3 skeleton rounded-full w-3/5" />
+          <div className="h-3 skeleton rounded-full w-4/5" />
         </div>
       </div>
       <div className="flex gap-2 mb-4">
-        <div className="h-5 bg-gray-100 rounded-full w-24 animate-pulse" />
-        <div className="h-5 bg-gray-100 rounded-full w-20 animate-pulse" />
+        <div className="h-5 skeleton rounded-full w-24" />
+        <div className="h-5 skeleton rounded-full w-20" />
       </div>
-      <div className="h-9 bg-gray-100 rounded-xl animate-pulse" />
+      <div className="h-9 skeleton rounded-lg" />
     </div>
   )
 }
@@ -52,10 +52,7 @@ function SkeletonCard() {
 function ClinicCard({ clinic }: { clinic: Clinic }) {
   const navigate = useNavigate()
   return (
-    <div
-      className="bg-white rounded-2xl p-5 border border-gray-100 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md flex flex-col"
-      style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04)' }}
-    >
+    <div className="bg-white rounded-xl p-5 border border-slate-200/80 hover:border-slate-300 hover:shadow-sm transition-all duration-200 flex flex-col">
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50">
@@ -84,15 +81,12 @@ function ClinicCard({ clinic }: { clinic: Clinic }) {
       {clinic.specialties?.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-3">
           {clinic.specialties.slice(0, 3).map(s => (
-            <span
-              key={s}
-              className="text-[11px] font-medium rounded-full px-2.5 py-0.5 bg-blue-50 text-blue-700"
-            >
+            <span key={s} className="text-[11px] font-medium rounded-full px-2.5 py-0.5 bg-slate-100 text-slate-600">
               {s}
             </span>
           ))}
           {clinic.specialties.length > 3 && (
-            <span className="text-[11px] font-medium rounded-full px-2.5 py-0.5 bg-gray-100 text-gray-500">
+            <span className="text-[11px] font-medium rounded-full px-2.5 py-0.5 bg-slate-100 text-slate-500">
               +{clinic.specialties.length - 3}
             </span>
           )}
@@ -100,7 +94,7 @@ function ClinicCard({ clinic }: { clinic: Clinic }) {
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-50">
+      <div className="flex items-center justify-between mt-auto pt-3 border-t border-slate-100">
         {clinic.next_available ? (
           <div className="flex items-center gap-1.5">
             <CalendarClock className="h-3.5 w-3.5 text-green-500" />

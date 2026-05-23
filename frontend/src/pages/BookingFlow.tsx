@@ -206,11 +206,11 @@ export function BookingFlow() {
     mutationFn: async () => {
       const { data } = await api.post('/appointments/', {
         clinic_id: clinicId,
-        doctor_id: selectedDoctor?.id ?? null,
+        doctor_id: selectedSlot!.doctor_id ?? selectedDoctor?.id ?? null,
         appointment_date: selectedDate,
         appointment_time: selectedSlot!.time + ':00',
         reason: reason || null,
-        amount_kes: selectedDoctor?.consultation_fee_kes ?? 0,
+        amount_kes: selectedSlot!.fee_kes ?? 0,
       })
       return data as Appointment
     },
@@ -221,7 +221,7 @@ export function BookingFlow() {
   })
 
   const canProceed = () => {
-    if (step === 'doctor') return !!selectedDoctor
+    if (step === 'doctor') return true          // doctor selection is optional
     if (step === 'date') return !!selectedDate
     if (step === 'time') return !!selectedSlot
     if (step === 'reason') return true

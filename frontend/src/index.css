@@ -1,50 +1,45 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
   --color-brand-50:  #f0fdf4;
   --color-brand-100: #dcfce7;
+  --color-brand-400: #4ade80;
   --color-brand-500: #22c55e;
   --color-brand-600: #16a34a;
-  --color-brand-700: #15803d;
-  --color-canvas:    #f4f3ef;
-  --color-forest:    #0d1f10;
-  --color-forest-2:  #132918;
+  --color-canvas:    #F8FAFC;
+  --color-surface:   #FFFFFF;
+  --color-sidebar:   #0C0E12;
 }
 
 @layer base {
   html {
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
   }
 
   body {
-    background-color: #f4f3ef;
-    color: #1a1a18;
+    background-color: #F8FAFC;
+    color: #0F172A;
     margin: 0;
   }
 
-  #root {
-    min-height: 100vh;
-  }
+  #root { min-height: 100vh; }
+  * { box-sizing: border-box; }
 
-  * {
-    box-sizing: border-box;
-  }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
 }
 
-/* ── Animations ─────────────────────────────────────────────────── */
+/* ── Animations ──────────────────────────────────────────────────── */
 
-@keyframes slide-up {
-  from { opacity: 0; transform: translateY(18px); }
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slide-in-right {
-  from { opacity: 0; transform: translateX(24px); }
-  to   { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes fade-in {
@@ -52,44 +47,53 @@
   to   { opacity: 1; }
 }
 
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
 @keyframes ecg-travel {
   from { stroke-dashoffset: 380; }
   to   { stroke-dashoffset: -72; }
 }
 
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(21, 128, 61, 0.25); }
-  50%       { box-shadow: 0 0 0 10px rgba(21, 128, 61, 0); }
+@keyframes pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.3); }
+  50%       { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
 }
 
-@keyframes bar-fill {
-  from { width: 0%; }
-  to   { width: var(--bar-target); }
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-.animate-slide-up {
-  animation: slide-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
+.animate-fade-up    { animation: fade-up 0.5s cubic-bezier(0.16,1,0.3,1) forwards; }
+.animate-fade-in    { animation: fade-in 0.3s ease forwards; }
+.animate-slide-up   { animation: fade-up 0.4s cubic-bezier(0.16,1,0.3,1) forwards; }
+.animate-slide-right{ animation: slide-in-right 0.4s cubic-bezier(0.16,1,0.3,1) forwards; }
 
-.animate-slide-right {
-  animation: slide-in-right 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
+.animate-stagger-1  { animation-delay: 0.05s; }
+.animate-stagger-2  { animation-delay: 0.10s; }
+.animate-stagger-3  { animation-delay: 0.15s; }
+.animate-stagger-4  { animation-delay: 0.20s; }
+.animate-stagger-5  { animation-delay: 0.25s; }
 
-.animate-fade-in {
-  animation: fade-in 0.35s ease forwards;
-}
-
-.animate-stagger-1 { animation-delay: 0.05s; opacity: 0; }
-.animate-stagger-2 { animation-delay: 0.12s; opacity: 0; }
-.animate-stagger-3 { animation-delay: 0.19s; opacity: 0; }
-.animate-stagger-4 { animation-delay: 0.26s; opacity: 0; }
-.animate-stagger-5 { animation-delay: 0.33s; opacity: 0; }
+.animate-fade-up-1  { animation: fade-up 0.5s 0.05s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-fade-up-2  { animation: fade-up 0.5s 0.10s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-fade-up-3  { animation: fade-up 0.5s 0.15s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-fade-up-4  { animation: fade-up 0.5s 0.20s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-fade-up-5  { animation: fade-up 0.5s 0.25s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-fade-up-6  { animation: fade-up 0.5s 0.30s cubic-bezier(0.16,1,0.3,1) both; }
 
 .ecg-line {
   stroke-dasharray: 72 308;
   animation: ecg-travel 1.8s linear infinite;
 }
 
-.pulse-btn {
-  animation: pulse-glow 2s ease-in-out infinite;
+.pulse-btn { animation: pulse-ring 2.5s ease-in-out infinite; }
+
+.skeleton {
+  background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
 }

@@ -43,12 +43,10 @@ export function ClinicAnalyticsPage() {
 
   if (isLoading) {
     return (
-      <div className="px-8 py-8">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 w-48 rounded-xl bg-gray-200" />
-          <div className="grid grid-cols-2 gap-6">
-            {[...Array(4)].map((_, i) => <div key={i} className="h-72 rounded-2xl bg-gray-200" />)}
-          </div>
+      <div className="animate-pulse space-y-6">
+        <div className="h-8 w-48 rounded-xl bg-gray-200" />
+        <div className="grid grid-cols-2 gap-6">
+          {[...Array(4)].map((_, i) => <div key={i} className="h-72 rounded-2xl bg-gray-200" />)}
         </div>
       </div>
     )
@@ -60,7 +58,7 @@ export function ClinicAnalyticsPage() {
   const formatRev = (v: number) => `KES ${v.toLocaleString()}`
 
   return (
-    <div className="px-8 py-8 max-w-7xl">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>

@@ -621,7 +621,7 @@ export function ClinicSettingsPage() {
   }
 
   return (
-    <div className="p-8 space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Settings</h1>

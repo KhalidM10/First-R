@@ -102,7 +102,7 @@ export function ClinicSubscriptionPage() {
   }
 
   return (
-    <div className="px-8 py-8 max-w-5xl">
+    <div className="space-y-6 animate-fade-in max-w-5xl">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Subscription</h1>

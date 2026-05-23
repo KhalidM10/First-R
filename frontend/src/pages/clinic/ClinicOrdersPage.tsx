@@ -225,7 +225,7 @@ export function ClinicOrdersPage() {
   }
 
   return (
-    <div className="p-8 space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>

@@ -134,7 +134,7 @@ export function ClinicProductsPage() {
   const outOfStockCount = products.filter(p => p.stock_quantity === 0).length
 
   return (
-    <div className="p-8 space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>

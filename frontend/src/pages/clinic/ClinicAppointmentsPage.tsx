@@ -94,7 +94,7 @@ export function ClinicAppointmentsPage() {
   })
 
   return (
-    <div className="px-8 py-8 max-w-7xl">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between mb-7">
         <div>

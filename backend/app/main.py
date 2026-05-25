@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.api.routes import (
     auth, triage, appointments, clinics, patients,
-    orders, dashboard, permissions, audit, sessions,
+    orders, dashboard, permissions, audit, sessions, admin, public,
 )
 from app.api.routes import notifications, ws
 from app.middleware.audit import AuditMiddleware
@@ -52,6 +52,8 @@ app.include_router(permissions.router,   prefix="/api/v1/permissions",    tags=[
 app.include_router(audit.router,         prefix="/api/v1/audit-logs",     tags=["audit"])
 app.include_router(sessions.router,      prefix="/api/v1/sessions",       tags=["sessions"])
 app.include_router(notifications.router, prefix="/api/v1/notifications",  tags=["notifications"])
+app.include_router(admin.router,         prefix="/api/v1/admin",           tags=["admin"])
+app.include_router(public.router,        prefix="/api/v1/platform",         tags=["platform"])
 
 # ── WebSocket ─────────────────────────────────────────────────────────────────
 app.include_router(ws.router, tags=["websocket"])

@@ -1,14 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import {
-  Activity, Calendar, Pill, BarChart2, ArrowRight,
-  CheckCircle2, Zap, MapPin, Clock, Users,
-  TrendingUp, Heart, Brain, Stethoscope, Star, Menu, X,
-  ChevronRight, AlertTriangle, Shield, Smartphone,
-  Quote,
-} from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { ArrowRight, Menu, X, CheckCircle2 } from 'lucide-react'
 import { TriageDemo } from '../components/landing/TriageDemo'
 import { SEO } from '../components/seo/SEO'
+import { api } from '../lib/api'
 
 const JSON_LD_MEDICAL_BUSINESS = {
   '@context': 'https://schema.org',
@@ -34,9 +30,27 @@ const JSON_LD_WEB_APP = {
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'KES' },
 }
 
-const INTER = "'Inter', system-ui, -apple-system, sans-serif"
+const DISPLAY = '"Playfair Display", Georgia, serif'
+const BODY = '"DM Sans", system-ui, sans-serif'
+const MONO = '"JetBrains Mono", monospace'
 
-function useFadeIn(threshold = 0.12) {
+const C = {
+  canvas:   '#F5F0E8',
+  surface:  '#FDFAF5',
+  dark:     '#1A1A2E',
+  dark2:    '#22223A',
+  brand:    '#1D4ED8',
+  accent:   '#C8A96E',
+  rule:     '#D4C9B0',
+  text:     '#1A1A2E',
+  muted:    '#8A8A9A',
+  body:     '#4A4A5A',
+  success:  '#059669',
+  danger:   '#DC2626',
+  warning:  '#D97706',
+}
+
+function useFadeIn(threshold = 0.1) {
   const ref = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
   useEffect(() => {
@@ -62,8 +76,8 @@ function FadeIn({ children, delay = 0, className = '', up = true }: {
       className={className}
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? 'none' : up ? 'translateY(28px)' : 'translateY(8px)',
-        transition: `opacity 0.7s ease ${delay}s, transform 0.7s ease ${delay}s`,
+        transform: visible ? 'none' : up ? 'translateY(24px)' : 'translateY(6px)',
+        transition: `opacity 0.8s ease ${delay}s, transform 0.8s ease ${delay}s`,
       }}
     >
       {children}
@@ -90,78 +104,72 @@ function CountUp({ target, suffix = '', prefix = '' }: { target: number; suffix?
   return <span ref={ref}>{prefix}{val.toLocaleString()}{suffix}</span>
 }
 
+/* ── Phone Mockup — updated for editorial palette ── */
 function PhoneMockup() {
   return (
-    <div className="relative mx-auto" style={{ width: 260, fontFamily: INTER }}>
+    <div className="relative mx-auto" style={{ width: 260, fontFamily: BODY }}>
       <div style={{
-        position: 'absolute', inset: -40, borderRadius: '50%',
-        background: 'radial-gradient(ellipse, rgba(30,64,175,0.35) 0%, transparent 70%)',
-        filter: 'blur(30px)', zIndex: 0,
-      }} />
-      <div style={{
-        position: 'absolute', top: 24, right: -56, zIndex: 10, minWidth: 160,
-        background: 'white', borderRadius: 14, padding: '8px 12px',
-        boxShadow: '0 12px 40px rgba(0,0,0,0.18)', border: '1px solid #f1f0ec',
+        position: 'absolute', top: 20, right: -52, zIndex: 10, minWidth: 160,
+        background: C.surface, borderRadius: 4, padding: '8px 12px',
+        boxShadow: '0 4px 16px rgba(26,26,46,0.12)', border: `1px solid ${C.rule}`,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#059669' }} />
-          <span style={{ fontSize: 10, fontWeight: 700, color: '#065f46' }}>Booking Confirmed</span>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: C.success }} />
+          <span style={{ fontSize: 10, fontWeight: 500, color: C.success, fontFamily: BODY }}>Booking Confirmed</span>
         </div>
-        <p style={{ fontSize: 9, color: '#6b7280', lineHeight: 1.4 }}>Dr. Kamau Njoroge · Today 10:30 AM</p>
+        <p style={{ fontSize: 9, color: C.muted, lineHeight: 1.4, fontFamily: BODY }}>Dr. Kamau Njoroge · Today 10:30 AM</p>
       </div>
       <div style={{
         position: 'relative', zIndex: 1,
         width: 260, height: 520, borderRadius: 40,
         background: '#111827', border: '7px solid #1f2937',
-        boxShadow: '0 40px 100px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.06)',
+        boxShadow: '0 24px 60px rgba(26,26,46,0.3)',
         overflow: 'hidden',
       }}>
         <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 80, height: 24, background: '#111827', borderRadius: '0 0 16px 16px', zIndex: 10 }} />
-        <div style={{ background: '#f4f3ef', height: '100%', overflow: 'hidden', paddingTop: 28 }}>
+        <div style={{ background: C.canvas, height: '100%', overflow: 'hidden', paddingTop: 28 }}>
           <div style={{ padding: '12px 14px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <div style={{ width: 22, height: 22, background: '#0d1f10', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ width: 12, height: 8 }}>
-                  <svg viewBox="0 0 22 22" fill="none"><path d="M1 11L6 11L8 7L11 16L13 6L15 11L21 11" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                </div>
+              <div style={{ width: 22, height: 22, background: C.dark, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="12" height="8" viewBox="0 0 22 22" fill="none"><path d="M1 11L6 11L8 7L11 16L13 6L15 11L21 11" stroke={C.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </div>
-              <span style={{ fontSize: 11, fontWeight: 800, color: '#0f172a' }}>MedAssist</span>
+              <span style={{ fontSize: 11, fontWeight: 500, color: C.text, fontFamily: BODY }}>MedAssist</span>
             </div>
-            <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: 9, fontWeight: 700, color: '#374151' }}>J</span>
+            <div style={{ width: 22, height: 22, borderRadius: '50%', background: C.rule, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontSize: 9, fontWeight: 500, color: C.body }}>J</span>
             </div>
           </div>
           <div style={{ padding: '0 12px', overflow: 'hidden' }}>
-            <p style={{ fontSize: 9, color: '#9ca3af', marginBottom: 10 }}>Good morning, Jane · Nairobi</p>
-            <div style={{ background: '#FEF3C7', borderRadius: 14, padding: '10px 12px', marginBottom: 8, border: '1px solid #FDE68A' }}>
+            <p style={{ fontSize: 9, color: C.muted, marginBottom: 10, fontFamily: BODY }}>Good morning, Jane · Nairobi</p>
+            <div style={{ background: '#FFFBEB', borderRadius: 4, padding: '10px 12px', marginBottom: 8, border: `1px solid #FDE68A` }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
-                <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#F59E0B' }} />
-                <span style={{ fontSize: 8, fontWeight: 800, color: '#92400E', letterSpacing: '0.05em' }}>MODERATE CONCERN</span>
+                <div style={{ width: 5, height: 5, borderRadius: '50%', background: C.warning }} />
+                <span style={{ fontSize: 8, fontWeight: 500, color: '#92400E', letterSpacing: '0.05em', textTransform: 'uppercase', fontFamily: BODY }}>MODERATE CONCERN</span>
               </div>
-              <p style={{ fontSize: 8.5, color: '#78350F', lineHeight: 1.5 }}>Consider seeing a doctor within 24 hours. Symptoms suggest possible infection.</p>
+              <p style={{ fontSize: 8.5, color: '#78350F', lineHeight: 1.5, fontFamily: BODY }}>Consider seeing a doctor within 24 hours. Symptoms suggest possible infection.</p>
             </div>
-            <div style={{ background: 'white', borderRadius: 14, padding: '10px 12px', marginBottom: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-              <p style={{ fontSize: 9, fontWeight: 700, color: '#0f172a', marginBottom: 7 }}>Nearby Clinics</p>
+            <div style={{ background: C.surface, borderRadius: 4, padding: '10px 12px', marginBottom: 8, border: `1px solid ${C.rule}` }}>
+              <p style={{ fontSize: 9, fontWeight: 500, color: C.text, marginBottom: 7, fontFamily: BODY }}>Nearby Clinics</p>
               {[['Westlands Medical', '0.8 km', 1500], ['City Health Clinic', '1.2 km', 1200]].map(([name, dist, fee]) => (
                 <div key={String(name)} style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
-                  <div style={{ width: 24, height: 24, background: '#EFF6FF', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <div style={{ width: 8, height: 8, background: '#1E40AF', borderRadius: 2 }} />
+                  <div style={{ width: 24, height: 24, background: `${C.brand}18`, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <div style={{ width: 8, height: 8, background: C.brand, borderRadius: 1 }} />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: 8.5, fontWeight: 600, color: '#0f172a' }}>{name}</p>
-                    <p style={{ fontSize: 7.5, color: '#9ca3af' }}>{dist} · KES {Number(fee).toLocaleString()}</p>
+                    <p style={{ fontSize: 8.5, fontWeight: 500, color: C.text, fontFamily: BODY }}>{name}</p>
+                    <p style={{ fontSize: 7.5, color: C.muted, fontFamily: BODY }}>{dist} · KES {Number(fee).toLocaleString()}</p>
                   </div>
                 </div>
               ))}
-              <div style={{ background: '#1E40AF', borderRadius: 9, padding: '6px 10px', textAlign: 'center', marginTop: 6 }}>
-                <span style={{ fontSize: 8.5, fontWeight: 700, color: 'white' }}>Book Appointment</span>
+              <div style={{ background: C.brand, borderRadius: 4, padding: '6px 10px', textAlign: 'center', marginTop: 6 }}>
+                <span style={{ fontSize: 8.5, fontWeight: 500, color: 'white', fontFamily: BODY }}>Book Appointment</span>
               </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-around', background: 'white', borderRadius: 14, padding: '7px 4px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-around', background: C.surface, borderRadius: 4, padding: '7px 4px', border: `1px solid ${C.rule}` }}>
               {[{ l: 'Home', a: true }, { l: 'Clinics', a: false }, { l: 'Rx', a: false }, { l: 'Me', a: false }].map(({ l, a }) => (
                 <div key={l} style={{ textAlign: 'center', padding: '0 8px' }}>
-                  <div style={{ width: '100%', height: 2.5, background: a ? '#1E40AF' : '#e5e7eb', borderRadius: 2, marginBottom: 2 }} />
-                  <span style={{ fontSize: 7, color: a ? '#1E40AF' : '#9ca3af', fontWeight: a ? 700 : 400 }}>{l}</span>
+                  <div style={{ width: '100%', height: 2, background: a ? C.brand : C.rule, marginBottom: 2 }} />
+                  <span style={{ fontSize: 7, color: a ? C.brand : C.muted, fontWeight: a ? 500 : 400, fontFamily: BODY }}>{l}</span>
                 </div>
               ))}
             </div>
@@ -172,47 +180,48 @@ function PhoneMockup() {
   )
 }
 
+/* ── Dashboard Mockup — updated for editorial palette ── */
 function DashboardMockup() {
   const bars = [45, 62, 58, 71, 80, 76, 90]
   return (
     <div style={{
-      background: '#1e293b', borderRadius: 16, overflow: 'hidden',
-      boxShadow: '0 40px 80px rgba(0,0,0,0.4)', fontFamily: INTER,
+      background: C.dark, borderRadius: 4, overflow: 'hidden',
+      boxShadow: '0 24px 48px rgba(26,26,46,0.3)', fontFamily: BODY,
     }}>
-      <div style={{ background: '#0f172a', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div style={{ background: '#0F0F1E', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
         <div style={{ display: 'flex', gap: 5 }}>
           {['#ef4444','#f59e0b','#22c55e'].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: '50%', background: c }} />)}
         </div>
-        <div style={{ flex: 1, background: '#1e293b', borderRadius: 6, padding: '4px 10px', margin: '0 10px' }}>
-          <span style={{ fontSize: 9, color: '#4b5563' }}>app.medassist.co.ke/clinic-dashboard</span>
+        <div style={{ flex: 1, background: C.dark2, borderRadius: 2, padding: '4px 10px', margin: '0 10px' }}>
+          <span style={{ fontSize: 9, color: C.muted, fontFamily: MONO }}>app.medassist.co.ke/dashboard</span>
         </div>
       </div>
       <div style={{ display: 'flex', height: 280 }}>
-        <div style={{ width: 44, background: '#0d1f10', padding: '12px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-          {[BarChart2, Calendar, Activity, Pill].map((Icon, i) => (
-            <div key={i} style={{ width: 28, height: 28, borderRadius: 8, background: i === 0 ? 'rgba(74,222,128,0.15)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon size={13} color={i === 0 ? '#4ade80' : 'rgba(255,255,255,0.25)'} />
+        <div style={{ width: 44, background: '#0F0F1E', padding: '12px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+          {['▦','⊞','◈','⊕'].map((sym, i) => (
+            <div key={i} style={{ width: 28, height: 28, borderRadius: 4, background: i === 0 ? `${C.accent}22` : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontSize: 11, color: i === 0 ? C.accent : 'rgba(255,255,255,0.2)' }}>{sym}</span>
             </div>
           ))}
         </div>
-        <div style={{ flex: 1, background: '#f4f3ef', padding: 14, overflow: 'hidden' }}>
+        <div style={{ flex: 1, background: C.canvas, padding: 14, overflow: 'hidden' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 12 }}>
             {[
-              { label: "Today's Appts", value: '12', color: '#1E40AF' },
-              { label: 'Week Revenue', value: 'KES 48k', color: '#059669' },
-              { label: 'Completion', value: '87%', color: '#7C3AED' },
+              { label: "Today's Appts", value: '12', color: C.brand },
+              { label: 'Week Revenue', value: 'KES 48k', color: C.success },
+              { label: 'Completion', value: '87%', color: C.accent },
             ].map(({ label, value, color }) => (
-              <div key={label} style={{ background: 'white', borderRadius: 10, padding: '8px 10px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-                <p style={{ fontSize: 8, color: '#9ca3af', marginBottom: 3 }}>{label}</p>
-                <p style={{ fontSize: 15, fontWeight: 800, color }}>{value}</p>
+              <div key={label} style={{ background: C.surface, borderRadius: 4, padding: '8px 10px', border: `1px solid ${C.rule}` }}>
+                <p style={{ fontSize: 8, color: C.muted, marginBottom: 3, fontFamily: BODY }}>{label}</p>
+                <p style={{ fontSize: 15, fontWeight: 700, color, fontFamily: DISPLAY }}>{value}</p>
               </div>
             ))}
           </div>
-          <div style={{ background: 'white', borderRadius: 10, padding: '10px 12px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-            <p style={{ fontSize: 8.5, fontWeight: 700, color: '#0f172a', marginBottom: 8 }}>Weekly Appointments</p>
+          <div style={{ background: C.surface, borderRadius: 4, padding: '10px 12px', border: `1px solid ${C.rule}` }}>
+            <p style={{ fontSize: 8.5, fontWeight: 500, color: C.text, marginBottom: 8, fontFamily: BODY }}>Weekly Appointments</p>
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 5, height: 50 }}>
               {bars.map((h, i) => (
-                <div key={i} style={{ flex: 1, borderRadius: '3px 3px 0 0', background: i === bars.length - 1 ? '#1E40AF' : '#DBEAFE', height: `${(h / 100) * 100}%` }} />
+                <div key={i} style={{ flex: 1, borderRadius: '2px 2px 0 0', background: i === bars.length - 1 ? C.brand : `${C.brand}28`, height: `${h}%` }} />
               ))}
             </div>
           </div>
@@ -222,6 +231,7 @@ function DashboardMockup() {
   )
 }
 
+/* ── Navbar ── */
 function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -238,52 +248,53 @@ function Navbar() {
     <nav style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200,
       transition: 'all 0.3s ease',
-      background: scrolled ? 'rgba(255,255,255,0.95)' : 'transparent',
-      backdropFilter: scrolled ? 'blur(14px)' : 'none',
-      borderBottom: scrolled ? '1px solid rgba(0,0,0,0.06)' : 'none',
-      fontFamily: INTER,
+      background: scrolled ? `${C.surface}F0` : 'transparent',
+      backdropFilter: scrolled ? 'blur(12px)' : 'none',
+      borderBottom: scrolled ? `1px solid ${C.rule}` : 'none',
+      fontFamily: BODY,
     }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-          <div style={{ width: 32, height: 32, background: '#0d1f10', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="18" height="18" viewBox="0 0 22 22" fill="none"><path d="M1 11L6 11L8 7L11 16L13 6L15 11L21 11" stroke="#4ade80" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 40px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+          <div style={{ width: 30, height: 30, background: C.dark, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="18" height="18" viewBox="0 0 22 22" fill="none"><path d="M1 11L6 11L8 7L11 16L13 6L15 11L21 11" stroke={C.accent} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </div>
-          <span style={{ fontSize: 15, fontWeight: 800, color: scrolled ? '#0f172a' : 'white', letterSpacing: '-0.02em' }}>MedAssist AI</span>
+          <span style={{ fontSize: 15, fontWeight: 500, color: scrolled ? C.text : C.canvas, fontFamily: BODY, letterSpacing: '-0.01em' }}>MedAssist AI</span>
         </button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 32 }} className="hidden md:flex">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 36 }} className="hidden md:flex">
           {[['For Patients', 'solution'], ['How It Works', 'how-it-works'], ['For Clinics', 'for-clinics'], ['Pricing', 'pricing']].map(([label, id]) => (
             <button key={id} onClick={() => scroll(id)} style={{
               background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-              fontSize: 14, fontWeight: 500, color: scrolled ? '#374151' : 'rgba(255,255,255,0.8)',
+              fontSize: 13, fontWeight: 400, fontFamily: BODY,
+              color: scrolled ? C.body : `${C.canvas}CC`,
               transition: 'color 0.2s',
             }}>{label}</button>
           ))}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }} className="hidden md:flex">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} className="hidden md:flex">
           <Link to="/login" style={{
-            fontSize: 13, fontWeight: 600, color: scrolled ? '#374151' : 'rgba(255,255,255,0.8)',
-            textDecoration: 'none', padding: '8px 16px', borderRadius: 10,
-            border: `1px solid ${scrolled ? '#e5e7eb' : 'rgba(255,255,255,0.2)'}`,
-            transition: 'all 0.2s',
+            fontSize: 13, fontWeight: 400, color: scrolled ? C.body : `${C.canvas}CC`,
+            textDecoration: 'none', padding: '8px 16px', fontFamily: BODY,
+            border: `1px solid ${scrolled ? C.rule : 'rgba(245,240,232,0.3)'}`,
+            borderRadius: 4, transition: 'all 0.2s',
           }}>Sign in</Link>
           <Link to="/register" style={{
-            fontSize: 13, fontWeight: 700, color: 'white', textDecoration: 'none',
-            padding: '8px 18px', borderRadius: 10, background: '#1E40AF',
-            boxShadow: '0 2px 8px rgba(30,64,175,0.4)', transition: 'all 0.2s',
+            fontSize: 13, fontWeight: 500, color: 'white', textDecoration: 'none',
+            padding: '8px 18px', borderRadius: 4, background: C.brand,
+            fontFamily: BODY, transition: 'all 0.2s',
           }}>Get Started</Link>
         </div>
-        <button onClick={() => setMobileOpen(v => !v)} style={{ display: 'none', background: 'none', border: 'none', cursor: 'pointer', color: scrolled ? '#374151' : 'white', padding: 4 }} className="flex md:hidden">
-          {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+        <button onClick={() => setMobileOpen(v => !v)} style={{ display: 'none', background: 'none', border: 'none', cursor: 'pointer', color: scrolled ? C.text : C.canvas, padding: 4 }} className="flex md:hidden">
+          {mobileOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
       {mobileOpen && (
-        <div style={{ background: 'white', borderTop: '1px solid #f1f0ec', padding: '16px 24px 20px' }}>
+        <div style={{ background: C.surface, borderTop: `1px solid ${C.rule}`, padding: '16px 24px 20px', fontFamily: BODY }}>
           {[['For Patients', 'solution'], ['How It Works', 'how-it-works'], ['For Clinics', 'for-clinics'], ['Pricing', 'pricing']].map(([label, id]) => (
-            <button key={id} onClick={() => scroll(id)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: 15, fontWeight: 500, color: '#374151', padding: '10px 0', borderBottom: '1px solid #f8f7f4' }}>{label}</button>
+            <button key={id} onClick={() => scroll(id)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: 15, fontWeight: 400, color: C.body, padding: '10px 0', borderBottom: `1px solid ${C.rule}`, fontFamily: BODY }}>{label}</button>
           ))}
           <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-            <Link to="/login" style={{ flex: 1, textAlign: 'center', fontSize: 13, fontWeight: 600, color: '#374151', textDecoration: 'none', padding: '10px', borderRadius: 10, border: '1px solid #e5e7eb' }}>Sign in</Link>
-            <Link to="/register" style={{ flex: 1, textAlign: 'center', fontSize: 13, fontWeight: 700, color: 'white', textDecoration: 'none', padding: '10px', borderRadius: 10, background: '#1E40AF' }}>Get Started</Link>
+            <Link to="/login" style={{ flex: 1, textAlign: 'center', fontSize: 13, fontWeight: 400, color: C.body, textDecoration: 'none', padding: '10px', borderRadius: 4, border: `1px solid ${C.rule}`, fontFamily: BODY }}>Sign in</Link>
+            <Link to="/register" style={{ flex: 1, textAlign: 'center', fontSize: 13, fontWeight: 500, color: 'white', textDecoration: 'none', padding: '10px', borderRadius: 4, background: C.brand, fontFamily: BODY }}>Get Started</Link>
           </div>
         </div>
       )}
@@ -291,10 +302,43 @@ function Navbar() {
   )
 }
 
+/* ── Section label component ── */
+function SectionLabel({ children, light = false }: { children: string; light?: boolean }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+      <div style={{ width: 24, height: 1, background: C.accent }} />
+      <span style={{
+        fontSize: 11, fontWeight: 400, letterSpacing: '0.12em', textTransform: 'uppercase',
+        color: light ? `${C.accent}` : C.accent, fontFamily: BODY,
+      }}>{children}</span>
+    </div>
+  )
+}
+
+/* ── Main export ── */
+interface PlatformStats {
+  total_clinics: number
+  total_triage_sessions: number
+  total_appointments: number
+  total_patients: number
+}
+
 export function LandingPage() {
   const [billingAnnual, setBillingAnnual] = useState(true)
   const [investorEmail, setInvestorEmail] = useState('')
   const [deckSent, setDeckSent] = useState(false)
+
+  const { data: platformStats } = useQuery<PlatformStats>({
+    queryKey: ['platform-stats'],
+    queryFn: () => api.get('/platform/stats').then(r => r.data),
+    staleTime: 300_000,
+  })
+  const ps: PlatformStats = platformStats ?? {
+    total_clinics: 0,
+    total_triage_sessions: 0,
+    total_appointments: 0,
+    total_patients: 0,
+  }
 
   function handleDeckRequest(e: React.FormEvent) {
     e.preventDefault()
@@ -302,7 +346,7 @@ export function LandingPage() {
     setDeckSent(true)
   }
 
-  const W = { maxWidth: 1200, margin: '0 auto', padding: '0 24px' }
+  const W: React.CSSProperties = { maxWidth: 1200, margin: '0 auto', padding: '0 40px' }
 
   const pricing = {
     patient: { monthly: 0, annual: 0 },
@@ -311,7 +355,7 @@ export function LandingPage() {
   }
 
   return (
-    <div style={{ fontFamily: INTER, background: 'white', color: '#0f172a', overflowX: 'hidden' }}>
+    <div style={{ fontFamily: BODY, background: C.canvas, color: C.text, overflowX: 'hidden' }}>
       <SEO
         canonical="https://medassist.ai/"
         keywords="healthcare Kenya, AI triage, clinic booking Nairobi, online doctor, medicine delivery Kenya"
@@ -321,70 +365,61 @@ export function LandingPage() {
 
       {/* ── 1. HERO ─────────────────────────────────────────────────────────── */}
       <section style={{
-        background: 'linear-gradient(135deg, #080f20 0%, #0f1e3d 40%, #132c5e 70%, #1a3a7a 100%)',
-        minHeight: '100vh', display: 'flex', alignItems: 'center', paddingTop: 68,
+        background: C.dark,
+        minHeight: '100vh', display: 'flex', alignItems: 'center', paddingTop: 64,
         position: 'relative', overflow: 'hidden',
       }}>
+        {/* Subtle dot grid */}
         <div style={{
           position: 'absolute', inset: 0, pointerEvents: 'none',
-          backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
-          backgroundSize: '48px 48px',
+          backgroundImage: `radial-gradient(circle, ${C.rule}18 1px, transparent 1px)`,
+          backgroundSize: '40px 40px', opacity: 0.6,
         }} />
-        <div style={{ position: 'absolute', top: '20%', left: '10%', width: 400, height: 400, background: 'radial-gradient(circle, rgba(30,64,175,0.2) 0%, transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: '10%', right: '5%', width: 500, height: 500, background: 'radial-gradient(circle, rgba(5,150,105,0.12) 0%, transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none' }} />
 
-        <div style={{ ...W, width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center', padding: '80px 24px' }}>
+        <div style={{ ...W, width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center', padding: '100px 40px' }}>
           <div>
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.25)',
-              borderRadius: 100, padding: '6px 14px', marginBottom: 28,
-            }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 6px #4ade80' }} />
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#4ade80', letterSpacing: '0.04em' }}>Kenya-First Health Tech · Series A</span>
-            </div>
+            <SectionLabel light>Kenya-First Health Tech · Series A</SectionLabel>
 
             <h1 style={{
-              fontSize: 'clamp(36px, 5vw, 62px)', fontWeight: 900,
-              color: 'white', lineHeight: 1.08, letterSpacing: '-0.03em', marginBottom: 24,
+              fontSize: 'clamp(44px, 7vw, 82px)', fontWeight: 700,
+              fontFamily: DISPLAY, color: C.canvas, lineHeight: 1.05,
+              letterSpacing: '-0.02em', marginBottom: 28,
             }}>
-              AI-Powered Healthcare<br />
-              <span style={{ color: '#60a5fa' }}>Access for Every Kenyan</span>
+              Healthcare<br />
+              <em style={{ fontStyle: 'italic', color: C.accent }}>Access</em><br />
+              for Every<br />Kenyan.
             </h1>
 
-            <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.65)', lineHeight: 1.6, marginBottom: 40, maxWidth: 480 }}>
+            <p style={{ fontSize: 16, color: `${C.canvas}99`, lineHeight: 1.75, marginBottom: 40, maxWidth: 420, fontFamily: BODY, fontWeight: 300 }}>
               MedAssist AI connects patients with clinics through intelligent triage, instant appointment booking, and seamless medicine ordering — all via M-Pesa.
             </p>
 
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 48 }}>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 56 }}>
               <Link to="/register" style={{
                 display: 'inline-flex', alignItems: 'center', gap: 8,
-                background: '#1E40AF', color: 'white', textDecoration: 'none',
-                padding: '14px 28px', borderRadius: 12, fontSize: 15, fontWeight: 700,
-                boxShadow: '0 4px 20px rgba(30,64,175,0.5)', transition: 'all 0.2s',
+                background: C.brand, color: 'white', textDecoration: 'none',
+                padding: '13px 28px', borderRadius: 4, fontSize: 14, fontWeight: 500,
+                fontFamily: BODY, transition: 'opacity 0.2s',
               }}>
-                Check Your Symptoms <ArrowRight size={16} />
+                Check Your Symptoms <ArrowRight size={15} />
               </Link>
               <button onClick={() => document.getElementById('for-clinics')?.scrollIntoView({ behavior: 'smooth' })} style={{
                 display: 'inline-flex', alignItems: 'center', gap: 8,
-                background: 'rgba(255,255,255,0.08)', color: 'white', border: '1px solid rgba(255,255,255,0.18)',
-                padding: '14px 28px', borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: 'pointer',
-                transition: 'all 0.2s',
+                background: 'transparent', color: `${C.canvas}CC`,
+                border: `1px solid ${C.canvas}33`,
+                padding: '13px 28px', borderRadius: 4, fontSize: 14, fontWeight: 400,
+                fontFamily: BODY, cursor: 'pointer', transition: 'all 0.2s',
               }}>
-                For Clinics <ChevronRight size={16} />
+                For Clinics
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
               {['Rule-Based AI', 'HIPAA Aware', 'M-Pesa Ready', 'Kenya-First'].map(badge => (
-                <div key={badge} style={{
-                  display: 'flex', alignItems: 'center', gap: 5,
-                  background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: 100, padding: '5px 12px',
-                }}>
-                  <CheckCircle2 size={11} color="rgba(74,222,128,0.9)" />
-                  <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>{badge}</span>
-                </div>
+                <span key={badge} style={{
+                  fontSize: 11, color: `${C.canvas}55`, fontFamily: BODY,
+                  fontWeight: 400, letterSpacing: '0.06em',
+                }}>{badge}</span>
               ))}
             </div>
           </div>
@@ -393,49 +428,54 @@ export function LandingPage() {
             <PhoneMockup />
           </div>
         </div>
+
+        {/* Bottom rule */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.accent}40, transparent)` }} />
       </section>
 
-      {/* ── 2. PROBLEM ──────────────────────────────────────────────────────── */}
-      <section id="problem" style={{ background: 'white', padding: '100px 0' }}>
+      {/* ── 2. PROBLEM — full-bleed dark, typographic ───────────────────────── */}
+      <section id="problem" style={{ background: '#0F0F1E', padding: '120px 0' }}>
         <div style={W}>
           <FadeIn>
-            <div style={{ textAlign: 'center', marginBottom: 64 }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 100, padding: '5px 14px', marginBottom: 20 }}>
-                <AlertTriangle size={12} color="#DC2626" />
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#DC2626', letterSpacing: '0.06em', textTransform: 'uppercase' }}>The Problem</span>
-              </div>
-              <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 16 }}>
-                Healthcare Access in Kenya is Broken
+            <div style={{ marginBottom: 80 }}>
+              <SectionLabel light>The Problem</SectionLabel>
+              <h2 style={{
+                fontSize: 'clamp(32px, 5vw, 56px)', fontWeight: 700,
+                fontFamily: DISPLAY, color: C.canvas, lineHeight: 1.1,
+                letterSpacing: '-0.02em', maxWidth: 640,
+              }}>
+                Healthcare access<br />in Kenya is broken.
               </h2>
-              <p style={{ fontSize: 17, color: '#6b7280', maxWidth: 520, margin: '0 auto' }}>
-                Millions of Kenyans face critical barriers to basic healthcare. The status quo is failing.
-              </p>
             </div>
           </FadeIn>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0, borderTop: `1px solid ${C.dark2}` }}>
             {[
-              { stat: '73%', desc: 'of Kenyans live more than 5km from a clinic', icon: MapPin, color: '#DC2626', bg: '#FEF2F2' },
-              { stat: '4.5h', desc: 'average wait time at public hospitals in Nairobi', icon: Clock, color: '#D97706', bg: '#FFFBEB' },
-              { stat: '1:10k', desc: 'doctor-to-patient ratio in rural Kenya', icon: Users, color: '#7C3AED', bg: '#F5F3FF' },
-            ].map(({ stat, desc, icon: Icon, color, bg }, i) => (
-              <FadeIn key={stat} delay={i * 0.12}>
+              { stat: '73%', desc: 'of Kenyans live more than 5km from a clinic', context: 'Infrastructure gap' },
+              { stat: '4.5h', desc: 'average wait time at public hospitals in Nairobi', context: 'Time cost' },
+              { stat: '1:10k', desc: 'doctor-to-patient ratio in rural Kenya', context: 'Workforce deficit' },
+            ].map(({ stat, desc, context }, i) => (
+              <FadeIn key={stat} delay={i * 0.1}>
                 <div style={{
-                  background: 'white', borderRadius: 20, padding: '32px 28px',
-                  border: '1px solid #f1f0ec', boxShadow: '0 4px 24px rgba(0,0,0,0.05)',
+                  padding: '48px 40px 48px 0',
+                  borderRight: i < 2 ? `1px solid ${C.dark2}` : 'none',
+                  marginRight: i < 2 ? 40 : 0,
+                  paddingLeft: i > 0 ? 40 : 0,
                 }}>
-                  <div style={{ width: 44, height: 44, background: bg, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-                    <Icon size={20} color={color} />
-                  </div>
-                  <p style={{ fontSize: 52, fontWeight: 900, color, lineHeight: 1, letterSpacing: '-0.03em', marginBottom: 12 }}>{stat}</p>
-                  <p style={{ fontSize: 15, color: '#374151', lineHeight: 1.5, fontWeight: 500 }}>{desc}</p>
+                  <span style={{ fontSize: 11, color: C.accent, fontFamily: BODY, letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginBottom: 16, fontWeight: 400 }}>{context}</span>
+                  <p style={{
+                    fontSize: 'clamp(52px, 7vw, 80px)', fontWeight: 700,
+                    fontFamily: DISPLAY, color: C.canvas, lineHeight: 1,
+                    letterSpacing: '-0.03em', marginBottom: 20,
+                  }}>{stat}</p>
+                  <p style={{ fontSize: 14, color: `${C.canvas}66`, lineHeight: 1.6, fontFamily: BODY, fontWeight: 300, maxWidth: 220 }}>{desc}</p>
                 </div>
               </FadeIn>
             ))}
           </div>
 
           <FadeIn delay={0.4}>
-            <p style={{ textAlign: 'center', fontSize: 12, color: '#9ca3af', marginTop: 32 }}>
+            <p style={{ fontSize: 11, color: `${C.canvas}30`, marginTop: 48, fontFamily: BODY, letterSpacing: '0.04em' }}>
               Source: Kenya Health Policy Framework · Ministry of Health, 2023
             </p>
           </FadeIn>
@@ -443,43 +483,47 @@ export function LandingPage() {
       </section>
 
       {/* ── 3. FOR PATIENTS ─────────────────────────────────────────────────── */}
-      <section id="solution" style={{ background: '#EFF6FF', padding: '100px 0' }}>
+      <section id="solution" style={{ background: C.canvas, padding: '120px 0' }}>
         <div style={W}>
           <FadeIn>
-            <div style={{ textAlign: 'center', marginBottom: 64 }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#DBEAFE', border: '1px solid #93C5FD', borderRadius: 100, padding: '5px 14px', marginBottom: 20 }}>
-                <Smartphone size={12} color="#1E40AF" />
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#1E40AF', letterSpacing: '0.06em', textTransform: 'uppercase' }}>For Patients</span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 80, marginBottom: 80 }}>
+              <div>
+                <SectionLabel>For Patients</SectionLabel>
+                <h2 style={{
+                  fontSize: 'clamp(30px, 4vw, 44px)', fontWeight: 700,
+                  fontFamily: DISPLAY, color: C.text, lineHeight: 1.15,
+                  letterSpacing: '-0.02em',
+                }}>
+                  Everything<br />you need,<br /><em style={{ color: C.brand }}>one app.</em>
+                </h2>
               </div>
-              <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 16 }}>
-                Everything You Need, One App
-              </h2>
-              <p style={{ fontSize: 17, color: '#4b5563', maxWidth: 540, margin: '0 auto' }}>
-                From knowing when to see a doctor to ordering medicine — MedAssist has you covered.
-              </p>
+              <div style={{ paddingTop: 8 }}>
+                <p style={{ fontSize: 17, color: C.body, lineHeight: 1.7, fontFamily: BODY, fontWeight: 300, marginBottom: 0, maxWidth: 520 }}>
+                  From knowing when to see a doctor to ordering medicine — MedAssist has you covered with AI-powered triage, verified clinic bookings, and M-Pesa payments built for Kenyan mobile networks.
+                </p>
+              </div>
             </div>
           </FadeIn>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1, border: `1px solid ${C.rule}`, borderRadius: 4, overflow: 'hidden' }}>
             {[
-              { icon: Brain, title: 'AI Symptom Triage', desc: 'Know if you need a doctor in 60 seconds. Our rule-based engine analyzes your symptoms and gives clear, safe guidance — not a diagnosis.', color: '#7C3AED', bg: '#F5F3FF', badge: 'Core Feature' },
-              { icon: Calendar, title: 'Smart Appointment Booking', desc: 'Book clinic appointments without a single phone call. See real-time availability, pick your doctor, and pay with M-Pesa.', color: '#1E40AF', bg: '#EFF6FF', badge: 'Live' },
-              { icon: Pill, title: 'OTC Medicine Ordering', desc: 'Order genuine OTC medicines from verified pharmacies in your area. Delivery or clinic pickup — your choice.', color: '#059669', bg: '#F0FDF4', badge: 'Live' },
-              { icon: Shield, title: 'Secure Health Records', desc: 'Your triage history, appointment records, and allergies — safely stored and accessible only to you and your care providers.', color: '#D97706', bg: '#FFFBEB', badge: 'Patients' },
-            ].map(({ icon: Icon, title, desc, color, bg, badge }, i) => (
-              <FadeIn key={title} delay={i * 0.1}>
+              { num: '01', title: 'AI Symptom Triage', desc: 'Know if you need a doctor in 60 seconds. Our rule-based engine analyzes your symptoms and gives clear, safe guidance — not a diagnosis.', badge: 'Core Feature' },
+              { num: '02', title: 'Smart Appointment Booking', desc: 'Book clinic appointments without a single phone call. See real-time availability, pick your doctor, and pay with M-Pesa.', badge: 'Live' },
+              { num: '03', title: 'OTC Medicine Ordering', desc: 'Order genuine OTC medicines from verified pharmacies in your area. Delivery or clinic pickup — your choice.', badge: 'Live' },
+              { num: '04', title: 'Secure Health Records', desc: 'Your triage history, appointment records, and allergies — safely stored and accessible only to you and your care providers.', badge: 'Patients' },
+            ].map(({ num, title, desc, badge }, i) => (
+              <FadeIn key={num} delay={i * 0.08}>
                 <div style={{
-                  background: 'white', borderRadius: 20, padding: '28px', border: '1px solid #e0eeff',
-                  boxShadow: '0 4px 24px rgba(30,64,175,0.06)', height: '100%',
+                  background: C.surface, padding: '40px 36px',
+                  borderRight: i % 2 === 0 ? `1px solid ${C.rule}` : 'none',
+                  borderBottom: i < 2 ? `1px solid ${C.rule}` : 'none',
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
-                    <div style={{ width: 48, height: 48, background: bg, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Icon size={22} color={color} />
-                    </div>
-                    <span style={{ fontSize: 10, fontWeight: 700, color, background: bg, borderRadius: 100, padding: '4px 10px' }}>{badge}</span>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
+                    <span style={{ fontSize: 48, fontWeight: 700, fontFamily: DISPLAY, color: `${C.rule}`, lineHeight: 1 }}>{num}</span>
+                    <span style={{ fontSize: 10, color: C.accent, fontFamily: BODY, letterSpacing: '0.08em', textTransform: 'uppercase', paddingTop: 4 }}>{badge}</span>
                   </div>
-                  <h3 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', marginBottom: 10, letterSpacing: '-0.01em' }}>{title}</h3>
-                  <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.65 }}>{desc}</p>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, fontFamily: DISPLAY, color: C.text, marginBottom: 12, lineHeight: 1.2 }}>{title}</h3>
+                  <p style={{ fontSize: 14, color: C.body, lineHeight: 1.7, fontFamily: BODY, fontWeight: 300 }}>{desc}</p>
                 </div>
               </FadeIn>
             ))}
@@ -488,34 +532,40 @@ export function LandingPage() {
       </section>
 
       {/* ── 4. HOW IT WORKS ─────────────────────────────────────────────────── */}
-      <section id="how-it-works" style={{ background: 'white', padding: '100px 0' }}>
+      <section id="how-it-works" style={{ background: C.surface, padding: '120px 0', borderTop: `1px solid ${C.rule}`, borderBottom: `1px solid ${C.rule}` }}>
         <div style={W}>
           <FadeIn>
-            <div style={{ textAlign: 'center', marginBottom: 72 }}>
-              <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 16 }}>
-                From Symptoms to Care in 3 Steps
+            <div style={{ marginBottom: 72 }}>
+              <SectionLabel>How It Works</SectionLabel>
+              <h2 style={{
+                fontSize: 'clamp(30px, 4vw, 48px)', fontWeight: 700,
+                fontFamily: DISPLAY, color: C.text, lineHeight: 1.1,
+                letterSpacing: '-0.02em', maxWidth: 540,
+              }}>
+                From symptoms to care<br />in three steps.
               </h2>
-              <p style={{ fontSize: 17, color: '#6b7280', maxWidth: 480, margin: '0 auto' }}>No waiting rooms. No phone tag. Just fast, guided access to care.</p>
             </div>
           </FadeIn>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, position: 'relative' }}>
-            <div style={{ position: 'absolute', top: 52, left: '17%', right: '17%', height: 2, background: 'linear-gradient(90deg, #DBEAFE, #1E40AF, #DBEAFE)', zIndex: 0, borderRadius: 1 }} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0 }}>
             {[
-              { step: '01', icon: Activity, title: 'Describe Your Symptoms', desc: 'Select or type your symptoms into the AI triage engine. Takes under 60 seconds.', color: '#1E40AF', bg: '#EFF6FF' },
-              { step: '02', icon: Stethoscope, title: 'Get Guidance + Book', desc: 'Receive a triage result with clear next steps. Book a clinic appointment directly if needed.', color: '#7C3AED', bg: '#F5F3FF' },
-              { step: '03', icon: Heart, title: 'Pick Up or Get Delivery', desc: 'Collect prescribed medicines from a verified pharmacy or have them delivered to your door.', color: '#059669', bg: '#F0FDF4' },
-            ].map(({ step, icon: Icon, title, desc, color, bg }, i) => (
-              <FadeIn key={step} delay={i * 0.15}>
-                <div style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
-                  <div style={{ width: 80, height: 80, background: bg, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', border: `3px solid white`, boxShadow: `0 0 0 3px ${bg}, 0 8px 24px rgba(0,0,0,0.08)` }}>
-                    <Icon size={28} color={color} />
-                  </div>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 14 }}>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: '#9ca3af', letterSpacing: '0.08em' }}>STEP {step}</span>
-                  </div>
-                  <h3 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', marginBottom: 10, letterSpacing: '-0.01em' }}>{title}</h3>
-                  <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.65, maxWidth: 260, margin: '0 auto' }}>{desc}</p>
+              { step: '01', title: 'Describe Your Symptoms', desc: 'Select or type your symptoms into the AI triage engine. Takes under 60 seconds.' },
+              { step: '02', title: 'Get Guidance & Book', desc: 'Receive a triage result with clear next steps. Book a clinic appointment directly if needed.' },
+              { step: '03', title: 'Pick Up or Get Delivery', desc: 'Collect prescribed medicines from a verified pharmacy or have them delivered to your door.' },
+            ].map(({ step, title, desc }, i) => (
+              <FadeIn key={step} delay={i * 0.12}>
+                <div style={{
+                  padding: '0 48px 0 0',
+                  borderRight: i < 2 ? `1px solid ${C.rule}` : 'none',
+                  marginRight: i < 2 ? 48 : 0,
+                  paddingLeft: i > 0 ? 48 : 0,
+                }}>
+                  <span style={{
+                    display: 'block', fontSize: 64, fontWeight: 700, fontFamily: DISPLAY,
+                    color: C.rule, lineHeight: 1, marginBottom: 28, letterSpacing: '-0.03em',
+                  }}>{step}</span>
+                  <h3 style={{ fontSize: 19, fontWeight: 700, fontFamily: DISPLAY, color: C.text, marginBottom: 14, lineHeight: 1.2 }}>{title}</h3>
+                  <p style={{ fontSize: 14, color: C.body, lineHeight: 1.7, fontFamily: BODY, fontWeight: 300 }}>{desc}</p>
                 </div>
               </FadeIn>
             ))}
@@ -524,18 +574,19 @@ export function LandingPage() {
       </section>
 
       {/* ── 5. LIVE TRIAGE DEMO ─────────────────────────────────────────────── */}
-      <section id="ai-triage" style={{ background: '#F0FDF4', padding: '100px 0' }}>
-        <div style={{ ...W, maxWidth: 860, margin: '0 auto', padding: '0 24px' }}>
+      <section id="ai-triage" style={{ background: C.canvas, padding: '120px 0' }}>
+        <div style={{ ...W, maxWidth: 860, margin: '0 auto', padding: '0 40px' }}>
           <FadeIn>
-            <div style={{ textAlign: 'center', marginBottom: 48 }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#D1FAE5', border: '1px solid #6EE7B7', borderRadius: 100, padding: '5px 14px', marginBottom: 20 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#059669', boxShadow: '0 0 6px #059669' }} />
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#065F46', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Try It Live · Real Backend</span>
-              </div>
-              <h2 style={{ fontSize: 'clamp(26px, 4vw, 44px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 16 }}>
-                Try the AI Triage Engine
+            <div style={{ marginBottom: 48 }}>
+              <SectionLabel>Try It Live · Real Backend</SectionLabel>
+              <h2 style={{
+                fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: 700,
+                fontFamily: DISPLAY, color: C.text, lineHeight: 1.1,
+                letterSpacing: '-0.02em', marginBottom: 16,
+              }}>
+                The AI Triage Engine
               </h2>
-              <p style={{ fontSize: 16, color: '#374151', maxWidth: 480, margin: '0 auto' }}>
+              <p style={{ fontSize: 16, color: C.body, maxWidth: 480, fontFamily: BODY, fontWeight: 300, lineHeight: 1.6 }}>
                 Select your symptoms and get an instant AI-powered assessment — connected to our live backend.
               </p>
             </div>
@@ -548,56 +599,48 @@ export function LandingPage() {
       </section>
 
       {/* ── 6. FOR CLINICS ──────────────────────────────────────────────────── */}
-      <section id="for-clinics" style={{ background: '#080f1f', padding: '100px 0' }}>
-        <div style={{ ...W, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 72, alignItems: 'center' }}>
+      <section id="for-clinics" style={{ background: C.dark, padding: '120px 0' }}>
+        <div style={{ ...W, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center' }}>
           <FadeIn>
             <div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 100, padding: '5px 14px', marginBottom: 24 }}>
-                <Stethoscope size={12} color="#4ade80" />
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#4ade80', letterSpacing: '0.06em', textTransform: 'uppercase' }}>For Clinics</span>
-              </div>
-              <h2 style={{ fontSize: 'clamp(28px, 3.5vw, 44px)', fontWeight: 800, color: 'white', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 20 }}>
-                Built for Kenyan Clinics
+              <SectionLabel light>For Clinics</SectionLabel>
+              <h2 style={{
+                fontSize: 'clamp(30px, 4vw, 48px)', fontWeight: 700,
+                fontFamily: DISPLAY, color: C.canvas, lineHeight: 1.1,
+                letterSpacing: '-0.02em', marginBottom: 24,
+              }}>
+                Built for<br /><em style={{ color: C.accent }}>Kenyan clinics.</em>
               </h2>
-              <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, marginBottom: 36 }}>
+              <p style={{ fontSize: 16, color: `${C.canvas}80`, lineHeight: 1.75, fontFamily: BODY, fontWeight: 300, marginBottom: 40 }}>
                 Give your clinic a modern operations hub. Manage appointments, track revenue, and grow your patient base — all from one dashboard.
               </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 36 }}>
+
+              <div style={{ borderTop: `1px solid ${C.dark2}`, paddingTop: 32, display: 'flex', flexDirection: 'column', gap: 28, marginBottom: 40 }}>
                 {[
-                  { icon: TrendingUp, label: 'More Bookings', desc: 'Appear in patient searches. Fill empty slots automatically.' },
-                  { icon: Users, label: 'Better Patient Data', desc: 'Unified records, triage history, and appointment logs.' },
-                  { icon: BarChart2, label: 'Revenue Analytics', desc: 'Track earnings, completion rates, and seasonal trends.' },
-                ].map(({ icon: Icon, label, desc }) => (
-                  <div key={label} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                    <div style={{ width: 36, height: 36, background: 'rgba(74,222,128,0.12)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <Icon size={16} color="#4ade80" />
-                    </div>
+                  { num: '01', label: 'More Bookings', desc: 'Appear in patient searches. Fill empty slots automatically.' },
+                  { num: '02', label: 'Better Patient Data', desc: 'Unified records, triage history, and appointment logs.' },
+                  { num: '03', label: 'Revenue Analytics', desc: 'Track earnings, completion rates, and seasonal trends.' },
+                ].map(({ num, label, desc }) => (
+                  <div key={num} style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: 11, color: C.accent, fontFamily: MONO, fontWeight: 400, paddingTop: 2, flexShrink: 0 }}>{num}</span>
                     <div>
-                      <p style={{ fontSize: 14, fontWeight: 700, color: 'white', marginBottom: 3 }}>{label}</p>
-                      <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>{desc}</p>
+                      <p style={{ fontSize: 14, fontWeight: 500, color: C.canvas, marginBottom: 4, fontFamily: BODY }}>{label}</p>
+                      <p style={{ fontSize: 13, color: `${C.canvas}55`, lineHeight: 1.55, fontFamily: BODY, fontWeight: 300 }}>{desc}</p>
                     </div>
                   </div>
                 ))}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <Link to="/register" style={{
                   display: 'inline-flex', alignItems: 'center', gap: 8,
-                  background: '#1E40AF', color: 'white', textDecoration: 'none',
-                  padding: '13px 24px', borderRadius: 12, fontSize: 14, fontWeight: 700,
-                  boxShadow: '0 4px 20px rgba(30,64,175,0.5)',
+                  background: C.brand, color: 'white', textDecoration: 'none',
+                  padding: '13px 24px', borderRadius: 4, fontSize: 14, fontWeight: 500,
+                  fontFamily: BODY,
                 }}>
-                  Get Your Clinic Listed <ArrowRight size={15} />
+                  Get Your Clinic Listed <ArrowRight size={14} />
                 </Link>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ display: 'flex' }}>
-                    {['#1E40AF', '#2563EB', '#3B82F6'].map((c, i) => (
-                      <div key={c} style={{ width: 24, height: 24, borderRadius: '50%', background: c, border: '2px solid #080f1f', marginLeft: i ? -8 : 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontSize: 8, fontWeight: 800, color: 'white' }}>C</span>
-                      </div>
-                    ))}
-                  </div>
-                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>Join 50+ clinics on MedAssist</span>
-                </div>
+                <span style={{ fontSize: 12, color: `${C.canvas}44`, fontFamily: BODY }}>Free 14-day trial · No credit card</span>
               </div>
             </div>
           </FadeIn>
@@ -607,206 +650,175 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── 7. TESTIMONIALS ─────────────────────────────────────────────────── */}
-      <section id="testimonials" style={{ background: '#F8FAFC', padding: '100px 0' }}>
+      {/* ── 7. EARLY COMMUNITY ──────────────────────────────────────────────── */}
+      <section id="testimonials" style={{ background: C.canvas, padding: '120px 0', borderTop: `1px solid ${C.rule}` }}>
         <div style={W}>
           <FadeIn>
-            <div style={{ textAlign: 'center', marginBottom: 64 }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 100, padding: '5px 14px', marginBottom: 20 }}>
-                <Star size={12} color="#D97706" fill="#D97706" />
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#92400E', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Trusted by Users</span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center', marginBottom: 80 }}>
+              <div>
+                <SectionLabel>Early Community</SectionLabel>
+                <h2 style={{
+                  fontSize: 'clamp(30px, 4vw, 48px)', fontWeight: 700,
+                  fontFamily: DISPLAY, color: C.text, lineHeight: 1.1,
+                  letterSpacing: '-0.02em', marginBottom: 24,
+                }}>
+                  Our first patients<br />will shape Kenya's<br /><em style={{ color: C.brand }}>healthcare future.</em>
+                </h2>
+                <p style={{
+                  fontSize: 16, color: C.body, lineHeight: 1.75,
+                  fontFamily: BODY, fontWeight: 300, marginBottom: 36, maxWidth: 420,
+                }}>
+                  Be among the first to use MedAssist AI — and help us build the platform that 55 million Kenyans deserve. Your feedback shapes every feature we ship.
+                </p>
+                <Link to="/register" style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  background: C.brand, color: 'white', textDecoration: 'none',
+                  padding: '13px 28px', borderRadius: 4, fontSize: 14, fontWeight: 500,
+                  fontFamily: BODY,
+                }}>
+                  Join Early Access <ArrowRight size={14} />
+                </Link>
               </div>
-              <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 16 }}>
-                Real People. Real Impact.
-              </h2>
-              <p style={{ fontSize: 17, color: '#6b7280', maxWidth: 480, margin: '0 auto' }}>
-                From rural patients to Nairobi clinic admins — here's what early users are saying.
-              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0, border: `1px solid ${C.rule}`, borderRadius: 4, overflow: 'hidden' }}>
+                {[
+                  { num: '01', title: 'Your safety first', body: 'Conservative triage that escalates when uncertain. We are a guidance tool, never a replacement for a doctor.' },
+                  { num: '02', title: 'Real clinics only', body: 'Every clinic on the platform is verified against the Kenya Medical Practitioners and Dentists Council register.' },
+                  { num: '03', title: 'Your data, private', body: 'Health data stays encrypted and is never sold. You control who sees your records.' },
+                ].map(({ num, title, body }, i) => (
+                  <div key={num} style={{
+                    padding: '28px 32px',
+                    borderBottom: i < 2 ? `1px solid ${C.rule}` : 'none',
+                    background: C.surface,
+                  }}>
+                    <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+                      <span style={{ fontSize: 11, color: C.accent, fontFamily: MONO, fontWeight: 400, paddingTop: 3, flexShrink: 0 }}>{num}</span>
+                      <div>
+                        <p style={{ fontSize: 14, fontWeight: 600, color: C.text, marginBottom: 6, fontFamily: BODY }}>{title}</p>
+                        <p style={{ fontSize: 13, color: C.body, lineHeight: 1.6, fontFamily: BODY, fontWeight: 300 }}>{body}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </FadeIn>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
-            {[
-              {
-                quote: "I had a fever for two days and wasn't sure if I should go to hospital. MedAssist told me to see a doctor within 24 hours — turned out I had a UTI. Caught it early because of this app.",
-                name: 'Amina W.',
-                role: 'Patient · Westlands, Nairobi',
-                rating: 5,
-                initials: 'AW',
-                color: '#1E40AF',
-                bg: '#EFF6FF',
-              },
-              {
-                quote: "We onboarded to MedAssist in one afternoon. Within a week, we had 23 new bookings from patients we'd never seen before. The dashboard analytics alone are worth the subscription.",
-                name: 'Dr. James Mwangi',
-                role: 'Medical Director · Kisumu Medics',
-                rating: 5,
-                initials: 'JM',
-                color: '#059669',
-                bg: '#F0FDF4',
-              },
-              {
-                quote: "My mum is in Eldoret and I'm in Nairobi. I used MedAssist to book her an appointment at a verified clinic and pay with M-Pesa from here. That peace of mind is priceless.",
-                name: 'Brian K.',
-                role: 'Patient · CBD, Nairobi',
-                rating: 5,
-                initials: 'BK',
-                color: '#7C3AED',
-                bg: '#F5F3FF',
-              },
-            ].map(({ quote, name, role, rating, initials, color, bg }, i) => (
-              <FadeIn key={name} delay={i * 0.1}>
-                <div style={{
-                  background: 'white', borderRadius: 20, padding: '28px 24px',
-                  border: '1px solid #e5e7eb', boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
-                  display: 'flex', flexDirection: 'column', height: '100%',
-                }}>
-                  {/* Stars */}
-                  <div style={{ display: 'flex', gap: 3, marginBottom: 16 }}>
-                    {Array.from({ length: rating }).map((_, j) => (
-                      <Star key={j} size={14} color="#F59E0B" fill="#F59E0B" />
-                    ))}
-                  </div>
-                  {/* Quote mark */}
-                  <Quote size={24} color={color} style={{ opacity: 0.3, marginBottom: 12 }} />
-                  {/* Quote text */}
-                  <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.7, marginBottom: 24, flex: 1 }}>
-                    {quote}
-                  </p>
-                  {/* Author */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: '50%', background: bg, border: `2px solid ${color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <span style={{ fontSize: 13, fontWeight: 800, color }}>{initials}</span>
-                    </div>
-                    <div>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{name}</p>
-                      <p style={{ fontSize: 11, color: '#9ca3af' }}>{role}</p>
-                    </div>
-                  </div>
-                </div>
-              </FadeIn>
-            ))}
-          </div>
-
-          {/* Trust row */}
+          {/* Trust indicators */}
           <FadeIn delay={0.3}>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 32, marginTop: 56, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-start', gap: 40, flexWrap: 'wrap', borderTop: `1px solid ${C.rule}`, paddingTop: 32 }}>
               {[
-                { icon: Shield, label: 'HIPAA Aware', color: '#1E40AF' },
-                { icon: CheckCircle2, label: 'Verified Clinics', color: '#059669' },
-                { icon: Zap, label: 'M-Pesa Integrated', color: '#D97706' },
-                { icon: Users, label: '2,400+ Triage Sessions', color: '#7C3AED' },
-              ].map(({ icon: Icon, label, color }) => (
-                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Icon size={16} color={color} />
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>{label}</span>
-                </div>
+                'HIPAA Aware',
+                'Verified Clinics Only',
+                'M-Pesa Integrated',
+                'Kenya-First',
+              ].map((label) => (
+                <span key={label} style={{ fontSize: 11, fontWeight: 400, color: C.muted, fontFamily: BODY, letterSpacing: '0.06em' }}>{label}</span>
               ))}
             </div>
           </FadeIn>
         </div>
       </section>
 
-      {/* ── 8. TRACTION / METRICS ───────────────────────────────────────────── */}
-      <section id="traction" style={{ background: '#1E40AF', padding: '100px 0', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px)', backgroundSize: '28px 28px', pointerEvents: 'none' }} />
-        <div style={{ ...W, position: 'relative', zIndex: 1 }}>
+      {/* ── 8. TRACTION — live platform metrics ─────────────────────────────── */}
+      <section id="traction" style={{ background: C.dark, padding: '100px 0' }}>
+        <div style={W}>
           <FadeIn>
-            <div style={{ textAlign: 'center', marginBottom: 64 }}>
-              <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 800, color: 'white', letterSpacing: '-0.02em', marginBottom: 12 }}>
-                Early Traction in Nairobi
-              </h2>
-              <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.65)' }}>Real users, real clinics, real impact — building fast.</p>
+            <div style={{ marginBottom: 48 }}>
+              <SectionLabel light>Live Platform Metrics</SectionLabel>
             </div>
-          </FadeIn>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2 }}>
-            {[
-              { target: 2400, suffix: '+', prefix: '', label: 'Triage Sessions', sub: 'Completed' },
-              { target: 18, suffix: '', prefix: '', label: 'Clinics Onboarded', sub: 'Nairobi pilot' },
-              { target: 1200000, suffix: '', prefix: 'KES ', label: 'Revenue Processed', sub: 'Via M-Pesa' },
-              { target: 48, suffix: '/5', prefix: '', label: 'Patient Satisfaction', sub: 'Star rating' },
-            ].map(({ target, suffix, prefix, label, sub }, i) => (
-              <FadeIn key={label} delay={i * 0.1}>
-                <div style={{ textAlign: 'center', padding: '0 16px' }}>
-                  <div style={{ fontSize: 'clamp(32px, 4vw, 52px)', fontWeight: 900, color: 'white', letterSpacing: '-0.03em', lineHeight: 1, marginBottom: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0, borderTop: `1px solid ${C.dark2}` }}>
+              {[
+                { target: ps.total_triage_sessions, suffix: '', prefix: '', label: 'Triage Sessions', sub: 'Completed' },
+                { target: ps.total_clinics,         suffix: '', prefix: '', label: 'Verified Clinics', sub: 'Across Kenya' },
+                { target: ps.total_patients,        suffix: '', prefix: '', label: 'Patients Registered', sub: 'And growing' },
+                { target: ps.total_appointments,    suffix: '', prefix: '', label: 'Appointments Completed', sub: 'Via platform' },
+              ].map(({ target, suffix, prefix, label, sub }, i) => (
+                <div key={label} style={{
+                  padding: '40px 40px 40px 0',
+                  borderRight: i < 3 ? `1px solid ${C.dark2}` : 'none',
+                  marginRight: i < 3 ? 40 : 0,
+                  paddingLeft: i > 0 ? 40 : 0,
+                }}>
+                  <div style={{ fontSize: 'clamp(32px, 4vw, 52px)', fontWeight: 700, fontFamily: DISPLAY, color: C.canvas, lineHeight: 1, marginBottom: 12, letterSpacing: '-0.03em' }}>
                     <CountUp target={target} suffix={suffix} prefix={prefix} />
                   </div>
-                  <p style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.9)', marginBottom: 4 }}>{label}</p>
-                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>{sub}</p>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: `${C.canvas}80`, fontFamily: BODY, marginBottom: 2 }}>{label}</p>
+                  <p style={{ fontSize: 11, color: C.muted, fontFamily: BODY }}>{sub}</p>
                 </div>
-              </FadeIn>
-            ))}
-          </div>
-          <FadeIn delay={0.5}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 48 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80' }} />
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>Beta metrics — Nairobi pilot, Q1 2026 · Seeking Series A</p>
+              ))}
             </div>
+          </FadeIn>
+          <FadeIn delay={0.4}>
+            <p style={{ fontSize: 11, color: `${C.canvas}30`, marginTop: 32, fontFamily: BODY, letterSpacing: '0.04em' }}>
+              Live metrics — updated in real time · Seeking Series A
+            </p>
           </FadeIn>
         </div>
       </section>
 
-      {/* ── 9. PRICING ──────────────────────────────────────────────────────── */}
-      <section id="pricing" style={{ background: 'white', padding: '100px 0' }}>
+      {/* ── 9. PRICING — editorial table ────────────────────────────────────── */}
+      <section id="pricing" style={{ background: C.canvas, padding: '120px 0', borderTop: `1px solid ${C.rule}` }}>
         <div style={W}>
           <FadeIn>
-            <div style={{ textAlign: 'center', marginBottom: 48 }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#DBEAFE', border: '1px solid #93C5FD', borderRadius: 100, padding: '5px 14px', marginBottom: 20 }}>
-                <Zap size={12} color="#1E40AF" />
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#1E40AF', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Pricing</span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 80, marginBottom: 64, alignItems: 'end' }}>
+              <div>
+                <SectionLabel>Pricing</SectionLabel>
+                <h2 style={{
+                  fontSize: 'clamp(30px, 4vw, 44px)', fontWeight: 700,
+                  fontFamily: DISPLAY, color: C.text, lineHeight: 1.1,
+                  letterSpacing: '-0.02em',
+                }}>
+                  Simple,<br />transparent<br />pricing.
+                </h2>
               </div>
-              <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 16 }}>
-                Simple, Transparent Pricing
-              </h2>
-              <p style={{ fontSize: 17, color: '#6b7280', maxWidth: 480, margin: '0 auto 32px' }}>
-                Free for patients, affordable SaaS for clinics. No hidden fees.
-              </p>
-              {/* Billing toggle */}
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 0, background: '#F1F5F9', borderRadius: 12, padding: 4 }}>
-                <button
-                  onClick={() => setBillingAnnual(false)}
-                  style={{
-                    padding: '8px 20px', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: 'none',
-                    background: !billingAnnual ? 'white' : 'transparent',
-                    color: !billingAnnual ? '#0f172a' : '#9ca3af',
-                    boxShadow: !billingAnnual ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
-                    transition: 'all 0.2s',
-                  }}
-                >Monthly</button>
-                <button
-                  onClick={() => setBillingAnnual(true)}
-                  style={{
-                    padding: '8px 20px', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: 'none',
-                    background: billingAnnual ? 'white' : 'transparent',
-                    color: billingAnnual ? '#0f172a' : '#9ca3af',
-                    boxShadow: billingAnnual ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
-                    transition: 'all 0.2s',
-                    display: 'flex', alignItems: 'center', gap: 6,
-                  }}
-                >
-                  Annual
-                  <span style={{ fontSize: 10, fontWeight: 700, color: '#059669', background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 100, padding: '1px 7px' }}>Save 20%</span>
-                </button>
+              <div>
+                <p style={{ fontSize: 16, color: C.body, lineHeight: 1.7, fontFamily: BODY, fontWeight: 300, marginBottom: 24, maxWidth: 420 }}>
+                  Free for patients, affordable SaaS for clinics. No hidden fees. No lock-in.
+                </p>
+                {/* Billing toggle */}
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 0, border: `1px solid ${C.rule}`, borderRadius: 4 }}>
+                  <button
+                    onClick={() => setBillingAnnual(false)}
+                    style={{
+                      padding: '8px 20px', borderRadius: '3px 0 0 3px', fontSize: 12, fontWeight: 400, cursor: 'pointer', border: 'none',
+                      background: !billingAnnual ? C.dark : 'transparent',
+                      color: !billingAnnual ? C.canvas : C.muted,
+                      fontFamily: BODY, transition: 'all 0.2s',
+                    }}
+                  >Monthly</button>
+                  <button
+                    onClick={() => setBillingAnnual(true)}
+                    style={{
+                      padding: '8px 20px', borderRadius: '0 3px 3px 0', fontSize: 12, fontWeight: 400, cursor: 'pointer',
+                      border: 'none', borderLeft: `1px solid ${C.rule}`,
+                      background: billingAnnual ? C.dark : 'transparent',
+                      color: billingAnnual ? C.canvas : C.muted,
+                      fontFamily: BODY, transition: 'all 0.2s',
+                      display: 'flex', alignItems: 'center', gap: 8,
+                    }}
+                  >
+                    Annual
+                    <span style={{ fontSize: 10, fontWeight: 500, color: C.success, fontFamily: BODY }}>−20%</span>
+                  </button>
+                </div>
               </div>
             </div>
           </FadeIn>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, border: `1px solid ${C.rule}`, borderRadius: 4, overflow: 'hidden' }}>
             {/* Patient — Free */}
             <FadeIn delay={0}>
-              <div style={{
-                background: 'white', borderRadius: 24, padding: '32px 28px',
-                border: '1px solid #e5e7eb', boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
-              }}>
-                <p style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 12 }}>Patient</p>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
-                  <span style={{ fontSize: 48, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.03em' }}>Free</span>
+              <div style={{ background: C.surface, padding: '40px 36px', borderRight: `1px solid ${C.rule}` }}>
+                <p style={{ fontSize: 11, fontWeight: 400, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 20, fontFamily: BODY }}>Patient</p>
+                <div style={{ marginBottom: 6 }}>
+                  <span style={{ fontSize: 52, fontWeight: 700, color: C.text, fontFamily: DISPLAY, letterSpacing: '-0.03em', lineHeight: 1 }}>Free</span>
                 </div>
-                <p style={{ fontSize: 13, color: '#9ca3af', marginBottom: 28 }}>Always free for patients</p>
+                <p style={{ fontSize: 12, color: C.muted, marginBottom: 32, fontFamily: BODY }}>Always free for patients</p>
                 <Link to="/register" style={{
-                  display: 'block', textAlign: 'center', padding: '12px', borderRadius: 12, fontSize: 14, fontWeight: 700,
-                  background: '#F1F5F9', color: '#374151', textDecoration: 'none', marginBottom: 28,
-                  transition: 'all 0.2s',
+                  display: 'block', textAlign: 'center', padding: '12px', borderRadius: 4, fontSize: 13, fontWeight: 500,
+                  border: `1px solid ${C.rule}`, color: C.text, textDecoration: 'none', marginBottom: 32,
+                  fontFamily: BODY, transition: 'all 0.2s',
                 }}>
                   Get Started Free
                 </Link>
@@ -820,39 +832,39 @@ export function LandingPage() {
                     'M-Pesa Payments',
                   ].map(f => (
                     <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <CheckCircle2 size={15} color="#059669" />
-                      <span style={{ fontSize: 13, color: '#374151' }}>{f}</span>
+                      <div style={{ width: 4, height: 4, background: C.rule, borderRadius: '50%', flexShrink: 0 }} />
+                      <span style={{ fontSize: 13, color: C.body, fontFamily: BODY, fontWeight: 300 }}>{f}</span>
                     </div>
                   ))}
                 </div>
               </div>
             </FadeIn>
 
-            {/* Pro Clinic — highlighted */}
+            {/* Pro Clinic */}
             <FadeIn delay={0.08}>
               <div style={{
-                background: '#0f1e3d', borderRadius: 24, padding: '32px 28px',
-                border: '2px solid #1E40AF', boxShadow: '0 16px 48px rgba(30,64,175,0.3)',
+                background: C.dark, padding: '40px 36px',
+                borderRight: `1px solid ${C.dark2}`,
                 position: 'relative',
               }}>
-                <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: '#1E40AF', borderRadius: 100, padding: '4px 16px' }}>
-                  <span style={{ fontSize: 10, fontWeight: 800, color: 'white', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Most Popular</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                  <p style={{ fontSize: 11, fontWeight: 400, color: `${C.canvas}55`, letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: BODY }}>Pro Clinic</p>
+                  <span style={{ fontSize: 10, color: C.accent, fontFamily: BODY, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Most Popular</span>
                 </div>
-                <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 12 }}>Pro Clinic</p>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.5)' }}>KES</span>
-                  <span style={{ fontSize: 48, fontWeight: 900, color: 'white', letterSpacing: '-0.03em' }}>
+                  <span style={{ fontSize: 13, fontWeight: 400, color: `${C.canvas}55`, fontFamily: BODY }}>KES</span>
+                  <span style={{ fontSize: 52, fontWeight: 700, color: C.canvas, fontFamily: DISPLAY, letterSpacing: '-0.03em', lineHeight: 1 }}>
                     {billingAnnual ? pricing.pro.annual.toLocaleString() : pricing.pro.monthly.toLocaleString()}
                   </span>
-                  <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>/month</span>
+                  <span style={{ fontSize: 13, color: `${C.canvas}40`, fontFamily: BODY }}>/mo</span>
                 </div>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 28 }}>
+                <p style={{ fontSize: 12, color: `${C.canvas}40`, marginBottom: 32, fontFamily: BODY }}>
                   {billingAnnual ? 'Billed annually · 2 months free' : 'Billed monthly'}
                 </p>
                 <Link to="/register" style={{
-                  display: 'block', textAlign: 'center', padding: '12px', borderRadius: 12, fontSize: 14, fontWeight: 700,
-                  background: '#1E40AF', color: 'white', textDecoration: 'none', marginBottom: 28,
-                  boxShadow: '0 4px 16px rgba(30,64,175,0.5)', transition: 'all 0.2s',
+                  display: 'block', textAlign: 'center', padding: '12px', borderRadius: 4, fontSize: 13, fontWeight: 500,
+                  background: C.brand, color: 'white', textDecoration: 'none', marginBottom: 32,
+                  fontFamily: BODY, transition: 'all 0.2s',
                 }}>
                   Start 14-Day Free Trial
                 </Link>
@@ -869,8 +881,8 @@ export function LandingPage() {
                     'Email Support',
                   ].map(f => (
                     <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <CheckCircle2 size={15} color="#60a5fa" />
-                      <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>{f}</span>
+                      <div style={{ width: 4, height: 4, background: `${C.canvas}40`, borderRadius: '50%', flexShrink: 0 }} />
+                      <span style={{ fontSize: 13, color: `${C.canvas}70`, fontFamily: BODY, fontWeight: 300 }}>{f}</span>
                     </div>
                   ))}
                 </div>
@@ -879,25 +891,22 @@ export function LandingPage() {
 
             {/* Enterprise */}
             <FadeIn delay={0.16}>
-              <div style={{
-                background: 'white', borderRadius: 24, padding: '32px 28px',
-                border: '1px solid #e5e7eb', boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
-              }}>
-                <p style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 12 }}>Enterprise</p>
+              <div style={{ background: C.surface, padding: '40px 36px' }}>
+                <p style={{ fontSize: 11, fontWeight: 400, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 20, fontFamily: BODY }}>Enterprise</p>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#9ca3af' }}>KES</span>
-                  <span style={{ fontSize: 48, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.03em' }}>
+                  <span style={{ fontSize: 13, fontWeight: 400, color: C.muted, fontFamily: BODY }}>KES</span>
+                  <span style={{ fontSize: 52, fontWeight: 700, color: C.text, fontFamily: DISPLAY, letterSpacing: '-0.03em', lineHeight: 1 }}>
                     {billingAnnual ? pricing.enterprise.annual.toLocaleString() : pricing.enterprise.monthly.toLocaleString()}
                   </span>
-                  <span style={{ fontSize: 13, color: '#9ca3af' }}>/month</span>
+                  <span style={{ fontSize: 13, color: C.muted, fontFamily: BODY }}>/mo</span>
                 </div>
-                <p style={{ fontSize: 13, color: '#9ca3af', marginBottom: 28 }}>
+                <p style={{ fontSize: 12, color: C.muted, marginBottom: 32, fontFamily: BODY }}>
                   {billingAnnual ? 'Billed annually · 2 months free' : 'Billed monthly'}
                 </p>
                 <Link to="/register" style={{
-                  display: 'block', textAlign: 'center', padding: '12px', borderRadius: 12, fontSize: 14, fontWeight: 700,
-                  background: 'white', color: '#1E40AF', textDecoration: 'none', marginBottom: 28,
-                  border: '2px solid #1E40AF', transition: 'all 0.2s',
+                  display: 'block', textAlign: 'center', padding: '12px', borderRadius: 4, fontSize: 13, fontWeight: 500,
+                  border: `1.5px solid ${C.brand}`, color: C.brand, textDecoration: 'none', marginBottom: 32,
+                  fontFamily: BODY, background: 'transparent', transition: 'all 0.2s',
                 }}>
                   Contact Sales
                 </Link>
@@ -914,8 +923,8 @@ export function LandingPage() {
                     'Compliance Reports',
                   ].map(f => (
                     <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <CheckCircle2 size={15} color="#059669" />
-                      <span style={{ fontSize: 13, color: '#374151' }}>{f}</span>
+                      <div style={{ width: 4, height: 4, background: C.rule, borderRadius: '50%', flexShrink: 0 }} />
+                      <span style={{ fontSize: 13, color: C.body, fontFamily: BODY, fontWeight: 300 }}>{f}</span>
                     </div>
                   ))}
                 </div>
@@ -924,7 +933,7 @@ export function LandingPage() {
           </div>
 
           <FadeIn delay={0.3}>
-            <p style={{ textAlign: 'center', fontSize: 13, color: '#9ca3af', marginTop: 32 }}>
+            <p style={{ fontSize: 12, color: C.muted, marginTop: 24, fontFamily: BODY }}>
               All clinic plans include a 14-day free trial · No credit card required · Cancel any time
             </p>
           </FadeIn>
@@ -932,32 +941,45 @@ export function LandingPage() {
       </section>
 
       {/* ── 10. TEAM ────────────────────────────────────────────────────────── */}
-      <section id="team" style={{ background: '#F8FAFC', padding: '100px 0' }}>
+      <section id="team" style={{ background: C.surface, padding: '120px 0', borderTop: `1px solid ${C.rule}`, borderBottom: `1px solid ${C.rule}` }}>
         <div style={W}>
           <FadeIn>
-            <div style={{ textAlign: 'center', marginBottom: 64 }}>
-              <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 16 }}>
-                Built by Technologists Who Understand Africa
+            <div style={{ marginBottom: 64 }}>
+              <SectionLabel>The Team</SectionLabel>
+              <h2 style={{
+                fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: 700,
+                fontFamily: DISPLAY, color: C.text, lineHeight: 1.15,
+                letterSpacing: '-0.02em', maxWidth: 600,
+              }}>
+                Built by technologists who understand Africa.
               </h2>
-              <p style={{ fontSize: 17, color: '#6b7280', maxWidth: 520, margin: '0 auto' }}>
-                Our team combines deep technical expertise with lived experience of Africa's healthcare challenges.
-              </p>
             </div>
           </FadeIn>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0 }}>
             {[
-              { role: 'CEO & Founder', bg: '#EFF6FF', color: '#1E40AF', init: 'F', bio: 'Healthcare access advocate. Built 3 products in the East African market.' },
-              { role: 'CTO', bg: '#F0FDF4', color: '#059669', init: 'T', bio: 'Full-stack engineer with 8 years in health-tech. Ex-Safaricom, ex-Twiga.' },
-              { role: 'COO', bg: '#F5F3FF', color: '#7C3AED', init: 'O', bio: 'Operations and go-to-market. Previously scaled a telemedicine startup to 40k users.' },
-            ].map(({ role, bg, color, init, bio }, i) => (
+              { role: 'CEO & Founder', init: 'F', bio: 'Healthcare access advocate. Built 3 products in the East African market.' },
+              { role: 'CTO', init: 'T', bio: 'Full-stack engineer with 8 years in health-tech. Ex-Safaricom, ex-Twiga.' },
+              { role: 'COO', init: 'O', bio: 'Operations and go-to-market. Previously scaled a telemedicine startup to 40k users.' },
+            ].map(({ role, init, bio }, i) => (
               <FadeIn key={role} delay={i * 0.1}>
-                <div style={{ background: 'white', borderRadius: 20, padding: '28px 24px', border: '1px solid #f1f0ec', boxShadow: '0 4px 24px rgba(0,0,0,0.04)', textAlign: 'center' }}>
-                  <div style={{ width: 72, height: 72, background: bg, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', border: `3px solid ${color}22` }}>
-                    <span style={{ fontSize: 28, fontWeight: 900, color }}>{init}</span>
+                <div style={{
+                  padding: '0 48px 0 0',
+                  borderRight: i < 2 ? `1px solid ${C.rule}` : 'none',
+                  marginRight: i < 2 ? 48 : 0,
+                  paddingLeft: i > 0 ? 48 : 0,
+                }}>
+                  <div style={{
+                    width: 52, height: 52, borderRadius: 4,
+                    background: `${C.accent}18`, border: `1px solid ${C.accent}40`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    marginBottom: 20,
+                  }}>
+                    <span style={{ fontSize: 20, fontWeight: 700, color: C.accent, fontFamily: DISPLAY }}>{init}</span>
                   </div>
-                  <div style={{ width: 80, height: 10, background: '#e5e7eb', borderRadius: 6, margin: '0 auto 8px' }} />
-                  <p style={{ fontSize: 12, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>{role}</p>
-                  <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>{bio}</p>
+                  {/* Name redacted — blurred for privacy */}
+                  <div style={{ width: 80, height: 8, background: C.rule, borderRadius: 2, marginBottom: 8 }} />
+                  <p style={{ fontSize: 11, fontWeight: 400, color: C.accent, textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: BODY, marginBottom: 14 }}>{role}</p>
+                  <p style={{ fontSize: 13, color: C.body, lineHeight: 1.65, fontFamily: BODY, fontWeight: 300 }}>{bio}</p>
                 </div>
               </FadeIn>
             ))}
@@ -966,131 +988,131 @@ export function LandingPage() {
       </section>
 
       {/* ── 11. BACKED BY ───────────────────────────────────────────────────── */}
-      <section id="investors" style={{ background: 'white', padding: '80px 0' }}>
+      <section id="investors" style={{ background: C.canvas, padding: '80px 0' }}>
         <div style={W}>
           <FadeIn>
-            <div style={{ textAlign: 'center', marginBottom: 48 }}>
-              <h2 style={{ fontSize: 28, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', marginBottom: 12 }}>
-                Backed by Kenya's Health Ecosystem
+            <div style={{ marginBottom: 40 }}>
+              <SectionLabel>Backed By</SectionLabel>
+              <h2 style={{
+                fontSize: 28, fontWeight: 700,
+                fontFamily: DISPLAY, color: C.text, letterSpacing: '-0.02em',
+              }}>
+                Kenya's health ecosystem.
               </h2>
-              <p style={{ fontSize: 15, color: '#6b7280' }}>Building with and for the institutions shaping African healthcare.</p>
             </div>
           </FadeIn>
           <FadeIn delay={0.1}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 16 }}>
-              {['Nairobi Angel Network', 'Kenya Health Fund', 'Safaricom Spark', 'African Tech Ventures', 'AMREF Health', 'GIZ Digital Health'].map(name => (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 0, borderTop: `1px solid ${C.rule}` }}>
+              {['Nairobi Angel Network', 'Kenya Health Fund', 'Safaricom Spark', 'African Tech Ventures', 'AMREF Health', 'GIZ Digital Health'].map((name, i) => (
                 <div key={name} style={{
-                  background: 'white', borderRadius: 12, padding: '14px 24px',
-                  border: '1px solid #e5e7eb', boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  padding: '20px 32px 20px 0',
+                  borderRight: i < 5 ? `1px solid ${C.rule}` : 'none',
+                  marginRight: i < 5 ? 32 : 0,
+                  paddingLeft: i > 0 ? 0 : 0,
                 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>{name}</span>
+                  <span style={{ fontSize: 13, fontWeight: 400, color: C.body, fontFamily: BODY }}>{name}</span>
                 </div>
               ))}
             </div>
           </FadeIn>
           <FadeIn delay={0.2}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 100, padding: '7px 16px' }}>
-                <Star size={13} color="#D97706" fill="#D97706" />
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#92400E' }}>Actively raising Series A — KES 80M target</span>
-              </div>
+            <div style={{ marginTop: 32, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 8, height: 8, background: C.accent, borderRadius: '50%' }} />
+              <span style={{ fontSize: 12, fontWeight: 400, color: C.body, fontFamily: BODY }}>Actively raising Series A — KES 80M target</span>
             </div>
           </FadeIn>
         </div>
       </section>
 
       {/* ── 12. FINAL CTA ───────────────────────────────────────────────────── */}
-      <section id="cta" style={{ background: 'linear-gradient(135deg, #080f20 0%, #0f1e3d 50%, #132c5e 100%)', padding: '120px 0', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%, -50%)', width: 600, height: 400, background: 'radial-gradient(circle, rgba(30,64,175,0.3) 0%, transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none' }} />
-        <div style={{ ...W, textAlign: 'center', position: 'relative', zIndex: 1 }}>
+      <section id="cta" style={{ background: C.dark, padding: '140px 0' }}>
+        <div style={{ ...W, maxWidth: 800, margin: '0 auto', padding: '0 40px' }}>
           <FadeIn>
-            <div style={{ maxWidth: 620, margin: '0 auto' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 100, padding: '5px 14px', marginBottom: 28 }}>
-                <Heart size={12} color="#4ade80" fill="rgba(74,222,128,0.5)" />
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#4ade80', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Investor Opportunity</span>
+            <SectionLabel light>Investor Opportunity</SectionLabel>
+            <h2 style={{
+              fontSize: 'clamp(36px, 6vw, 72px)', fontWeight: 700,
+              fontFamily: DISPLAY, color: C.canvas, lineHeight: 1.05,
+              letterSpacing: '-0.025em', marginBottom: 24,
+            }}>
+              Kenya deserves<br />
+              better healthcare<br />
+              <em style={{ color: C.accent }}>access.</em>
+            </h2>
+            <p style={{ fontSize: 17, color: `${C.canvas}66`, lineHeight: 1.7, fontFamily: BODY, fontWeight: 300, marginBottom: 52, maxWidth: 480 }}>
+              We're raising Series A to expand beyond Nairobi. Join us in building the healthcare infrastructure that 55 million Kenyans need.
+            </p>
+            {deckSent ? (
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12, border: `1px solid ${C.accent}40`, borderRadius: 4, padding: '16px 28px' }}>
+                <CheckCircle2 size={18} color={C.accent} />
+                <span style={{ fontSize: 15, fontWeight: 400, color: C.accent, fontFamily: BODY }}>Thank you — we'll be in touch within 24 hours.</span>
               </div>
-              <h2 style={{ fontSize: 'clamp(30px, 5vw, 54px)', fontWeight: 900, color: 'white', letterSpacing: '-0.025em', lineHeight: 1.08, marginBottom: 20 }}>
-                Kenya deserves better<br />healthcare access.<br />
-                <span style={{ color: '#60a5fa' }}>Help us build it.</span>
-              </h2>
-              <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, marginBottom: 48 }}>
-                We're raising Series A to expand beyond Nairobi. Join us in building the healthcare infrastructure that 55 million Kenyans need.
-              </p>
-              {deckSent ? (
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 16, padding: '16px 28px' }}>
-                  <CheckCircle2 size={20} color="#4ade80" />
-                  <span style={{ fontSize: 15, fontWeight: 600, color: '#4ade80' }}>Thank you — we'll be in touch within 24 hours.</span>
-                </div>
-              ) : (
-                <form onSubmit={handleDeckRequest} style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-                  <input
-                    type="email"
-                    placeholder="your@fund.com"
-                    value={investorEmail}
-                    onChange={e => setInvestorEmail(e.target.value)}
-                    required
-                    style={{
-                      flex: '1 1 280px', maxWidth: 320, padding: '14px 20px', borderRadius: 12, fontSize: 14,
-                      background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
-                      color: 'white', outline: 'none', fontFamily: INTER,
-                    }}
-                  />
-                  <button type="submit" style={{
-                    padding: '14px 28px', borderRadius: 12, fontSize: 15, fontWeight: 700,
-                    background: '#1E40AF', color: 'white', border: 'none', cursor: 'pointer',
-                    boxShadow: '0 4px 20px rgba(30,64,175,0.5)', fontFamily: INTER,
-                    display: 'flex', alignItems: 'center', gap: 8,
-                  }}>
-                    Request Investor Deck <ArrowRight size={15} />
-                  </button>
-                </form>
-              )}
-            </div>
+            ) : (
+              <form onSubmit={handleDeckRequest} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <input
+                  type="email"
+                  placeholder="your@fund.com"
+                  value={investorEmail}
+                  onChange={e => setInvestorEmail(e.target.value)}
+                  required
+                  style={{
+                    flex: '1 1 260px', maxWidth: 320, padding: '13px 20px', borderRadius: 4, fontSize: 14,
+                    background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.dark2}`,
+                    color: C.canvas, outline: 'none', fontFamily: BODY,
+                  }}
+                />
+                <button type="submit" style={{
+                  padding: '13px 28px', borderRadius: 4, fontSize: 14, fontWeight: 500,
+                  background: C.brand, color: 'white', border: 'none', cursor: 'pointer',
+                  fontFamily: BODY, display: 'flex', alignItems: 'center', gap: 8,
+                }}>
+                  Request Investor Deck <ArrowRight size={14} />
+                </button>
+              </form>
+            )}
           </FadeIn>
         </div>
       </section>
 
       {/* ── 13. FOOTER ──────────────────────────────────────────────────────── */}
-      <footer style={{ background: '#0d1f10', padding: '56px 0 36px', fontFamily: INTER }}>
+      <footer style={{ background: '#0F0F1E', padding: '64px 0 40px', fontFamily: BODY, borderTop: `1px solid ${C.dark2}` }}>
         <div style={W}>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 48, marginBottom: 48 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 48, marginBottom: 52 }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                <div style={{ width: 32, height: 32, background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg width="18" height="18" viewBox="0 0 22 22" fill="none"><path d="M1 11L6 11L8 7L11 16L13 6L15 11L21 11" stroke="#4ade80" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+                <div style={{ width: 28, height: 28, background: C.dark2, borderRadius: 4, border: `1px solid ${C.accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 22 22" fill="none"><path d="M1 11L6 11L8 7L11 16L13 6L15 11L21 11" stroke={C.accent} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </div>
-                <span style={{ fontSize: 15, fontWeight: 800, color: 'white', letterSpacing: '-0.02em' }}>MedAssist AI</span>
+                <span style={{ fontSize: 14, fontWeight: 500, color: C.canvas, fontFamily: BODY }}>MedAssist AI</span>
               </div>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: 260 }}>
+              <p style={{ fontSize: 13, color: `${C.canvas}40`, lineHeight: 1.7, maxWidth: 240, fontWeight: 300 }}>
                 AI-powered healthcare access for every Kenyan. Triage, book, and order — all in one place.
               </p>
-              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 20 }}>Nairobi, Kenya · 2026</p>
+              <p style={{ fontSize: 11, color: `${C.canvas}25`, marginTop: 20, fontFamily: MONO }}>Nairobi, Kenya · 2026</p>
             </div>
             <div>
-              <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 16 }}>Product</p>
+              <p style={{ fontSize: 10, fontWeight: 400, color: `${C.canvas}30`, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 20, fontFamily: BODY }}>Product</p>
               {['Symptom Triage', 'Clinic Finder', 'Book Appointment', 'Medicine Orders'].map(l => (
-                <Link key={l} to="/register" style={{ display: 'block', fontSize: 13, color: 'rgba(255,255,255,0.5)', textDecoration: 'none', marginBottom: 10 }}>{l}</Link>
+                <Link key={l} to="/register" style={{ display: 'block', fontSize: 13, color: `${C.canvas}50`, textDecoration: 'none', marginBottom: 12, fontWeight: 300, fontFamily: BODY }}>{l}</Link>
               ))}
             </div>
             <div>
-              <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 16 }}>For Clinics</p>
+              <p style={{ fontSize: 10, fontWeight: 400, color: `${C.canvas}30`, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 20, fontFamily: BODY }}>For Clinics</p>
               {['Get Listed', 'Dashboard', 'Pricing', 'API Access'].map(l => (
-                <Link key={l} to="/register" style={{ display: 'block', fontSize: 13, color: 'rgba(255,255,255,0.5)', textDecoration: 'none', marginBottom: 10 }}>{l}</Link>
+                <Link key={l} to="/register" style={{ display: 'block', fontSize: 13, color: `${C.canvas}50`, textDecoration: 'none', marginBottom: 12, fontWeight: 300, fontFamily: BODY }}>{l}</Link>
               ))}
             </div>
             <div>
-              <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 16 }}>Company</p>
+              <p style={{ fontSize: 10, fontWeight: 400, color: `${C.canvas}30`, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 20, fontFamily: BODY }}>Company</p>
               {['About', 'Blog', 'Careers', 'Contact'].map(l => (
-                <Link key={l} to="/register" style={{ display: 'block', fontSize: 13, color: 'rgba(255,255,255,0.5)', textDecoration: 'none', marginBottom: 10 }}>{l}</Link>
+                <Link key={l} to="/register" style={{ display: 'block', fontSize: 13, color: `${C.canvas}50`, textDecoration: 'none', marginBottom: 12, fontWeight: 300, fontFamily: BODY }}>{l}</Link>
               ))}
             </div>
           </div>
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>© 2026 MedAssist AI · Nairobi, Kenya · All rights reserved</p>
-            <div style={{ display: 'flex', gap: 20 }}>
+          <div style={{ borderTop: `1px solid ${C.dark2}`, paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+            <p style={{ fontSize: 12, color: `${C.canvas}25`, fontFamily: BODY }}>© 2026 MedAssist AI · Nairobi, Kenya · All rights reserved</p>
+            <div style={{ display: 'flex', gap: 24 }}>
               {['Privacy Policy', 'Terms of Service', 'HIPAA Notice'].map(l => (
-                <Link key={l} to="/" style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>{l}</Link>
+                <Link key={l} to="/" style={{ fontSize: 12, color: `${C.canvas}30`, textDecoration: 'none', fontFamily: BODY }}>{l}</Link>
               ))}
             </div>
           </div>
